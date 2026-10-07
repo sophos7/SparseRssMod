@@ -1090,6 +1090,9 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                         break;
                 }
                 dlgColor.dismiss();
+                if (INSTANCE != null && INSTANCE != activity) {
+                    INSTANCE.recreate();
+                }
                 activity.finish();
                 activity.startActivity(intent);
             }
