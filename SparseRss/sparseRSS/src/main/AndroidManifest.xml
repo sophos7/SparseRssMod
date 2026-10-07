@@ -25,6 +25,7 @@
         android:protectionLevel="normal" />
 
     <application
+        android:name=".SparseRssApplication"
         android:allowBackup="true"
         android:allowClearUserData="true"
         android:usesCleartextTraffic="true"
