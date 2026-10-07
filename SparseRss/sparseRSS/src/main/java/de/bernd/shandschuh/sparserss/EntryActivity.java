@@ -489,142 +489,88 @@ public class EntryActivity extends AppCompatActivity implements android.widget.S
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home: {
-                finish();
-                return true;
+        final int selectedId = item.getItemId();
+        if (selectedId == android.R.id.home) {
+            finish();
+            return true;
+        } else if (selectedId == R.id.menu_markasread || selectedId == R.id.menu_markasread2) {
+            finish();
+        } else if (selectedId == R.id.menu_color) {
+            CSS = null;//reset
+            String entryid = Util.getLastEntryId(this);
+            int feedId = Util.getFeedIdZuEntryId(this, entryid);
+            Uri contenUri = FeedData.EntryColumns.FULL_CONTENT_URI("" + feedId, entryid);
+            Intent intent = new Intent(Intent.ACTION_VIEW, contenUri);
+            RSSOverview.chooseColorDialog(mActivity,intent);
+        } else if (selectedId == R.id.url_button) {
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_browser) {
+            onClickMenuBrowser(null);
+        } else if (selectedId == R.id.menu_chrome) {
+            Util.setBrowserPackagePrefs(this,"com.android.chrome");
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_default) {
+            Util.setBrowserPackagePrefs(this,null);
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_firefox) {
+            Util.setBrowserPackagePrefs(this,"org.mozilla.firefox");
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_firefox_klar) {
+            Util.setBrowserPackagePrefs(this,"org.mozilla.klar");
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_edge) {
+            Util.setBrowserPackagePrefs(this,"com.microsoft.emmx");
+            onClickLoadBrowser(null);
+        } else if (selectedId == R.id.menu_feed) {
+            _id = null;
+            onClickReload(null);
+            // readUrl(); // TODO ???
+        } else if (selectedId == R.id.menu_mobilize) {
+            onClickLoadMobilize(null);
+        } else if (selectedId == R.id.menu_readability) {
+            onClickReadability(null);
+        } else if (selectedId == R.id.menu_readability4j) {
+            onClickReadability4J(null);
+        } else if (selectedId == R.id.menu_amp) {
+            onClickLoadAmp(null);
+        } else if (selectedId == R.id.menu_googleweblight) {
+            onClickLoadGoogleweblight(null);
+        } else if (selectedId == R.id.menu_copytoclipboard) {
+            if (link != null) {
+                ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setText(link);
             }
-            case R.id.menu_markasread:
-            case R.id.menu_markasread2: {
-                finish();
-                break;
+        } else if (selectedId == R.id.menu_share) {
+            onClickShare(null);
+        } else if (selectedId == R.id.menu_share_entry) {
+            onClickShareEntry(null);
+        } else if (selectedId == R.id.menu_share_source) {
+            onClickShareSource(null);
+        } else if (selectedId == R.id.menu_text_scale) {
+            onClickShowSeekBarDialog(null);
+        } else if (selectedId == R.id.menu_cover) {
+            if (showCover) {
+                showCover = false;
+                item.setChecked(false);
+                Util.setShowCover(this, "" + feedId, false);
+                mEntryPagerAdapter.notifyDataSetChanged();
+            } else {
+                showCover = true;
+                item.setChecked(true);
+                Util.setShowCover(this, "" + feedId, true);
+                mEntryPagerAdapter.notifyDataSetChanged();
             }
-
-            case R.id.menu_color: {
-                CSS = null;//reset
-                String entryid = Util.getLastEntryId(this);
-                int feedId = Util.getFeedIdZuEntryId(this, entryid);
-                Uri contenUri = FeedData.EntryColumns.FULL_CONTENT_URI("" + feedId, entryid);
-                Intent intent = new Intent(Intent.ACTION_VIEW, contenUri);
-                RSSOverview.chooseColorDialog(mActivity,intent);
-                break;
+        } else if (selectedId == R.id.menu_scroll_page) {
+            if (scrollPage) {
+                scrollPage = false;
+                item.setChecked(false);
+                Util.setScrollPage(this, false);
+            } else {
+                scrollPage = true;
+                item.setChecked(true);
+                Util.setScrollPage(this,  true);
             }
-
-            case R.id.url_button: {
-                onClickLoadBrowser(null);
-                break;
-            }
-            case R.id.menu_browser: {
-                onClickMenuBrowser(null);
-                break;
-            }
-            case R.id.menu_chrome: {
-                Util.setBrowserPackagePrefs(this,"com.android.chrome");
-                onClickLoadBrowser(null);
-                break;
-            }
-            case R.id.menu_default: {
-                Util.setBrowserPackagePrefs(this,null);
-                onClickLoadBrowser(null);
-                break;
-            }
-            case R.id.menu_firefox: {
-                Util.setBrowserPackagePrefs(this,"org.mozilla.firefox");
-                onClickLoadBrowser(null);
-                break;
-            }
-            case R.id.menu_firefox_klar: {
-                Util.setBrowserPackagePrefs(this,"org.mozilla.klar");
-                onClickLoadBrowser(null);
-                break;
-            }
-            case R.id.menu_edge: {
-                Util.setBrowserPackagePrefs(this,"com.microsoft.emmx");
-                onClickLoadBrowser(null);
-                break;
-            }
-
-            case R.id.menu_feed: {
-                _id = null;
-                onClickReload(null);
-                // readUrl(); // TODO ???
-                break;
-            }
-
-            case R.id.menu_mobilize: {
-                onClickLoadMobilize(null);
-                break;
-            }
-
-            case R.id.menu_readability: {
-                onClickReadability(null);
-                break;
-            }
-            case R.id.menu_readability4j: {
-                onClickReadability4J(null);
-                break;
-            }
-
-            case R.id.menu_amp: {
-                onClickLoadAmp(null);
-                break;
-            }
-            case R.id.menu_googleweblight: {
-                onClickLoadGoogleweblight(null);
-                break;
-            }
-
-            case R.id.menu_copytoclipboard: {
-                if (link != null) {
-                    ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setText(link);
-                }
-                break;
-            }
-
-            case R.id.menu_share: {
-                onClickShare(null);
-                break;
-            }
-            case R.id.menu_share_entry: {
-                onClickShareEntry(null);
-                break;
-            }
-            case R.id.menu_share_source: {
-                onClickShareSource(null);
-                break;
-            }
-            case R.id.menu_text_scale: {
-                onClickShowSeekBarDialog(null);
-                break;
-            }
-            case R.id.menu_cover: {
-                if (showCover) {
-                    showCover = false;
-                    item.setChecked(false);
-                    Util.setShowCover(this, "" + feedId, false);
-                    mEntryPagerAdapter.notifyDataSetChanged();
-                } else {
-                    showCover = true;
-                    item.setChecked(true);
-                    Util.setShowCover(this, "" + feedId, true);
-                    mEntryPagerAdapter.notifyDataSetChanged();
-                }
-                break;
-            }
-            case R.id.menu_scroll_page: {
-                if (scrollPage) {
-                    scrollPage = false;
-                    item.setChecked(false);
-                    Util.setScrollPage(this, false);
-                } else {
-                    scrollPage = true;
-                    item.setChecked(true);
-                    Util.setScrollPage(this,  true);
-                }
-                break;
-            }
-
-        }//switch
+        }
+//switch
         return super.onOptionsItemSelected(item);
     }
 

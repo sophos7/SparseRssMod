@@ -414,181 +414,140 @@ public class ParentActivity extends AppCompatActivity {
 
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()) {
+        final int selectedId = item.getItemId();
+        if (selectedId == android.R.id.home) {
+            finish();
+        } else if (selectedId == R.id.menu_color) {
+            Intent intent = new Intent(mActivity, mActivity.getClass());
+            intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
+            intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
+            RSSOverview.chooseColorDialog(mActivity, intent);
+        } else if (selectedId == R.id.menu_markasread_up_here) {
+            clickMarkAsReadUpHere(null);
+        } else if (selectedId == R.id.menu_markasread) {
+            clickMarkAsRead(null);
+        } else if (selectedId == R.id.menu_markasunread) {
+            new Thread() { // the update process takes some time
+                public void run() {
+                    getContentResolver().update(uri, RSSOverview.getUnreadContentValues(), null, null);
+                }
+            }.start();
+            mAdapter.markAsUnread();
+        } else if (selectedId == R.id.menu_hideread) {
+            if (item.isChecked()) {
+                item.setChecked(false).setTitle(R.string.contextmenu_hideread)
+                        .setIcon(android.R.drawable.ic_menu_close_clear_cancel);
+                mAdapter.showRead(true);
+            } else {
+                item.setChecked(true).setTitle(R.string.contextmenu_showread).setIcon(android.R.drawable.ic_menu_view);
+                mAdapter.showRead(false);
+            }
+        } else if (selectedId == R.id.menu_deleteread) {
+            new Thread() { // the delete process takes some time
+                public void run() {
+                    String selection = Strings.READDATE_GREATERZERO + Strings.DB_AND + " (" + Strings.DB_EXCUDEFAVORITE
+                            + ")";
 
-            case android.R.id.home:
-                finish();
-                break;
+                    getContentResolver().delete(uri, selection, null);
+                    FeedData.deletePicturesOfFeed(ParentActivity.this, uri, selection);
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            mAdapter.getCursor().requery();
+                        }
+                    });
+                }
+            }.start();
+        } else if (selectedId == R.id.menu_deleteallentries) {
+            Builder builder = new AlertDialog.Builder(this);
 
-            case R.id.menu_color: {
-                Intent intent = new Intent(mActivity, mActivity.getClass());
+            builder.setIcon(android.R.drawable.ic_dialog_alert);
+            builder.setTitle(R.string.contextmenu_deleteallentries);
+            builder.setMessage(R.string.question_areyousure);
+            builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    new Thread() {
+                        public void run() {
+                            getContentResolver().delete(uri, Strings.DB_EXCUDEFAVORITE, null);
+                            runOnUiThread(new Runnable() {
+                                public void run() {
+                                    mAdapter.getCursor().requery();
+                                }
+                            });
+                        }
+                    }.start();
+                }
+            });
+            builder.setNegativeButton(android.R.string.no, null);
+            builder.show();
+        } else if (selectedId == CONTEXTMENU_MARKASREAD_ID) {
+            long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
+
+            getContentResolver().update(ContentUris.withAppendedId(uri, id), RSSOverview.getReadContentValues(), null,
+                    null);
+            mAdapter.markAsRead(id);
+        } else if (selectedId == CONTEXTMENU_MARKASUNREAD_ID) {
+            long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
+
+            getContentResolver().update(ContentUris.withAppendedId(uri, id), RSSOverview.getUnreadContentValues(), null,
+                    null);
+            mAdapter.markAsUnread(id);
+        } else if (selectedId == CONTEXTMENU_DELETE_ID) {
+            long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
+
+            getContentResolver().delete(ContentUris.withAppendedId(uri, id), null, null);
+            FeedData.deletePicturesOfEntry(Long.toString(id));
+            mAdapter.getCursor().requery(); // we have no other choice
+        } else if (selectedId == CONTEXTMENU_COPYURL) {
+            ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE))
+                    .setText(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag().toString());
+        } else if (selectedId == R.id.menu_cardview) {
+            String str = this.getClass().getName();
+            if ("de.bernd.shandschuh.sparserss.RecycleListActivity".equals(str)) {
+                Util.setTestListPrefs(this, true);
+                Intent intent = new Intent(getApplicationContext(), EntriesListActivity.class);
                 intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
                 intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
-                RSSOverview.chooseColorDialog(mActivity, intent);
-                break;
-            }
-
-            case R.id.menu_markasread_up_here: {
-                clickMarkAsReadUpHere(null);
-                break;
-            }
-
-            case R.id.menu_markasread: {
-                clickMarkAsRead(null);
-                break;
-            }
-
-            case R.id.menu_markasunread: {
-                new Thread() { // the update process takes some time
-                    public void run() {
-                        getContentResolver().update(uri, RSSOverview.getUnreadContentValues(), null, null);
-                    }
-                }.start();
-                mAdapter.markAsUnread();
-                break;
-            }
-            case R.id.menu_hideread: {
-                if (item.isChecked()) {
-                    item.setChecked(false).setTitle(R.string.contextmenu_hideread)
-                            .setIcon(android.R.drawable.ic_menu_close_clear_cancel);
-                    mAdapter.showRead(true);
-                } else {
-                    item.setChecked(true).setTitle(R.string.contextmenu_showread).setIcon(android.R.drawable.ic_menu_view);
-                    mAdapter.showRead(false);
-                }
-                break;
-            }
-            case R.id.menu_deleteread: {
-                new Thread() { // the delete process takes some time
-                    public void run() {
-                        String selection = Strings.READDATE_GREATERZERO + Strings.DB_AND + " (" + Strings.DB_EXCUDEFAVORITE
-                                + ")";
-
-                        getContentResolver().delete(uri, selection, null);
-                        FeedData.deletePicturesOfFeed(ParentActivity.this, uri, selection);
-                        runOnUiThread(new Runnable() {
-                            public void run() {
-                                mAdapter.getCursor().requery();
-                            }
-                        });
-                    }
-                }.start();
-                break;
-            }
-            case R.id.menu_deleteallentries: {
-                Builder builder = new AlertDialog.Builder(this);
-
-                builder.setIcon(android.R.drawable.ic_dialog_alert);
-                builder.setTitle(R.string.contextmenu_deleteallentries);
-                builder.setMessage(R.string.question_areyousure);
-                builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        new Thread() {
-                            public void run() {
-                                getContentResolver().delete(uri, Strings.DB_EXCUDEFAVORITE, null);
-                                runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        mAdapter.getCursor().requery();
-                                    }
-                                });
-                            }
-                        }.start();
-                    }
-                });
-                builder.setNegativeButton(android.R.string.no, null);
-                builder.show();
-                break;
-            }
-            case CONTEXTMENU_MARKASREAD_ID: {
-                long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
-
-                getContentResolver().update(ContentUris.withAppendedId(uri, id), RSSOverview.getReadContentValues(), null,
-                        null);
-                mAdapter.markAsRead(id);
-                break;
-            }
-            case CONTEXTMENU_MARKASUNREAD_ID: {
-                long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
-
-                getContentResolver().update(ContentUris.withAppendedId(uri, id), RSSOverview.getUnreadContentValues(), null,
-                        null);
-                mAdapter.markAsUnread(id);
-                break;
-            }
-            case CONTEXTMENU_DELETE_ID: {
-                long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
-
-                getContentResolver().delete(ContentUris.withAppendedId(uri, id), null, null);
-                FeedData.deletePicturesOfEntry(Long.toString(id));
-                mAdapter.getCursor().requery(); // we have no other choice
-                break;
-            }
-            case CONTEXTMENU_COPYURL: {
-                ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE))
-                        .setText(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag().toString());
-                break;
-            }
-            case R.id.menu_cardview: {
-
-                String str = this.getClass().getName();
-                if ("de.bernd.shandschuh.sparserss.RecycleListActivity".equals(str)) {
-                    Util.setTestListPrefs(this, true);
-                    Intent intent = new Intent(getApplicationContext(), EntriesListActivity.class);
-                    intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
-                    intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
-                    startActivity(intent);
-                } else {
-                    Util.setTestListPrefs(this, false);
-                    Intent intent = new Intent(getApplicationContext(), RecycleListActivity.class);
-                    intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
-                    intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
-                    startActivity(intent);
-                }
-                finish();
-                break;
-            }
-
-            case R.id.menu_teaser: {
-
-                if (Util.getTeaserPrefs(getApplicationContext())) {
-                    Util.setTeaserPrefs(getApplicationContext(), false);
-                } else {
-                    Util.setTeaserPrefs(getApplicationContext(), true);
-                }
-                String str = this.getClass().getName();
-                Class klasse = EntriesListActivity.class;
-                if ("de.bernd.shandschuh.sparserss.RecycleListActivity".equals(str)) {
-                    klasse = RecycleListActivity.class;
-                }
-                Intent intent = new Intent(getApplicationContext(), klasse);
-                intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
-                intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
-                finish();
                 startActivity(intent);
-                break;
+            } else {
+                Util.setTestListPrefs(this, false);
+                Intent intent = new Intent(getApplicationContext(), RecycleListActivity.class);
+                intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
+                intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
+                startActivity(intent);
             }
-
-            case R.id.menu_topfeed: {
-                if (getTopFeed(mLongFeedId)) {
-                    setTopFeed(mLongFeedId, false);
-                    item.setChecked(false);
-                } else {
-                    setTopFeed(mLongFeedId, true);
-                    item.setChecked(true);
-                }
-                break;
+            finish();
+        } else if (selectedId == R.id.menu_teaser) {
+            if (Util.getTeaserPrefs(getApplicationContext())) {
+                Util.setTeaserPrefs(getApplicationContext(), false);
+            } else {
+                Util.setTeaserPrefs(getApplicationContext(), true);
             }
-            case R.id.menu_offline: {
-                if (getOfflineFeed(mLongFeedId)) {
-                    setOfflineFeed(mLongFeedId, false);
-                    item.setChecked(false);
-                } else {
-                    setOfflineFeed(mLongFeedId, true);
-                    item.setChecked(true);
-                }
-                break;
+            String str = this.getClass().getName();
+            Class klasse = EntriesListActivity.class;
+            if ("de.bernd.shandschuh.sparserss.RecycleListActivity".equals(str)) {
+                klasse = RecycleListActivity.class;
             }
-
+            Intent intent = new Intent(getApplicationContext(), klasse);
+            intent.setData(FeedData.EntryColumns.CONTENT_URI(Long.toString(mLongFeedId)));
+            intent.putExtra(FeedData.FeedColumns._ID, mLongFeedId);
+            finish();
+            startActivity(intent);
+        } else if (selectedId == R.id.menu_topfeed) {
+            if (getTopFeed(mLongFeedId)) {
+                setTopFeed(mLongFeedId, false);
+                item.setChecked(false);
+            } else {
+                setTopFeed(mLongFeedId, true);
+                item.setChecked(true);
+            }
+        } else if (selectedId == R.id.menu_offline) {
+            if (getOfflineFeed(mLongFeedId)) {
+                setOfflineFeed(mLongFeedId, false);
+                item.setChecked(false);
+            } else {
+                setOfflineFeed(mLongFeedId, true);
+                item.setChecked(true);
+            }
         }
         return super.
 
