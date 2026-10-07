@@ -25,11 +25,11 @@
 
 package de.bernd.shandschuh.sparserss.handler;
 
+import androidx.core.text.HtmlCompat;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import androidx.preference.PreferenceManager;
-import android.text.Html;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -672,7 +672,7 @@ public class RSSHandler extends DefaultHandler {
 		String result = title.replace(Strings.AMP_SG, Strings.AMP).replaceAll(Strings.HTML_TAG_REGEX, Strings.EMPTY).replace(Strings.HTML_LT, Strings.LT).replace(Strings.HTML_GT, Strings.GT).replace(Strings.HTML_QUOT, Strings.QUOT).replace(Strings.HTML_APOSTROPHE, Strings.APOSTROPHE);
 		
 		if (result.indexOf(ANDRHOMBUS) > -1) {
-			return Html.fromHtml(result, null, null).toString();
+			return HtmlCompat.fromHtml(result, HtmlCompat.FROM_HTML_MODE_LEGACY).toString();
 		} else {
 			return result;
 		}

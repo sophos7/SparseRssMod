@@ -36,7 +36,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
-import android.text.ClipboardManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +52,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -383,11 +383,11 @@ public class EntryActivity extends AppCompatActivity implements android.widget.S
         addColorMenu.setIcon(R.drawable.ic_action_brightness_medium);
 
         MenuItem markasreadItem = menu.add(0, R.id.menu_markasread, 0, R.string.contextmenu_markasread);
-        MenuItemCompat.setShowAsAction(markasreadItem, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+        markasreadItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         markasreadItem.setIcon(android.R.drawable.ic_menu_revert);
 
         MenuItem browserItem = menu.add(0, R.id.url_button, 0, R.string.contextmenu_browser);
-        MenuItemCompat.setShowAsAction(browserItem, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+        browserItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         browserItem.setIcon(android.R.drawable.ic_menu_view);
         return true;
     }
@@ -537,7 +537,7 @@ public class EntryActivity extends AppCompatActivity implements android.widget.S
             onClickLoadGoogleweblight(null);
         } else if (selectedId == R.id.menu_copytoclipboard) {
             if (link != null) {
-                ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setText(link);
+                ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText(link, link));
             }
         } else if (selectedId == R.id.menu_share) {
             onClickShare(null);

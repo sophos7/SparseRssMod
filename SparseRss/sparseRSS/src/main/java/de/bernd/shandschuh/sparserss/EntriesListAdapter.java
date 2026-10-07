@@ -143,8 +143,7 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 	public EntriesListAdapter(Activity context, Uri uri, boolean showFeedInfo, boolean autoreload, int layout, int iFeedFilter, boolean bResetSearchFilter) {
 		super(context, layout, createManagedCursor(context, uri, true, iFeedFilter, bResetSearchFilter), autoreload);
 
-		today.setHours(0);
-		today.setMinutes(0);
+		today = Util.startOfToday();
 
 		showRead = true;
 		this.uri = uri;
@@ -328,7 +327,7 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 						}
 						bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
 						bitmap = Util.getRoundedBitmap(bitmap);
-						BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+						BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 						bitmapDrawable.setTargetDensity(densityDpi);	
 						dateTextView.setCompoundDrawablesWithIntrinsicBounds(bitmapDrawable, null, null,  null);
 					} else {

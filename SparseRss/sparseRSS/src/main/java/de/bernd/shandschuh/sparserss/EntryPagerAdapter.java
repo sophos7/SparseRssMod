@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -22,7 +21,6 @@ import androidx.viewpager.widget.PagerAdapter;
 
 import android.text.format.DateFormat;
 import android.util.Xml.Encoding;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -180,18 +178,16 @@ public class EntryPagerAdapter extends PagerAdapter {
                     if(!mContext.isScrollPage()){
                         return true;
                     }
-                    Display display = mContext.getWindowManager().getDefaultDisplay();
-                    Point size = new Point();
-                    display.getSize(size);
-                    if (wWebView.getHeight() < size.y) {
+                    int screenHeight = mContext.getResources().getDisplayMetrics().heightPixels;
+                    if (wWebView.getHeight() < screenHeight) {
                         return false;
                     }
-                    int mitte = size.y/2;
+                    int mitte = screenHeight/2;
                     int touch= (int) event.getY();
                     int[] arrLocation=new int[2];
                     wWebView.getLocationOnScreen(arrLocation); //neg
                     int y = touch + arrLocation[1];
-                    int yDirection=size.y/10*9;
+                    int yDirection=screenHeight/10*9;
                     if( y < mitte){
                         yDirection=-yDirection;
                     }
@@ -945,7 +941,7 @@ public class EntryPagerAdapter extends PagerAdapter {
                             Bitmap bitmap = BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.length);
                             bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
                             bitmap = Util.getRoundedBitmap(bitmap);
-                            BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+                            BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
                             int densityDpi = Resources.getSystem().getDisplayMetrics().densityDpi;
                             bitmapDrawable.setTargetDensity(densityDpi);
                             ret = bitmapDrawable;
@@ -978,11 +974,6 @@ public class EntryPagerAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup collection, int position, Object view) {
         collection.removeView((View) view);
-    }
-
-    @Override
-    public void destroyItem(View container, int position, Object object) {
-        super.destroyItem(container, position, object);
     }
 
     // public void refreshCount() {

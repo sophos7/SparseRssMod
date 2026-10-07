@@ -15,7 +15,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.ClipboardManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -30,7 +31,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 
@@ -127,7 +127,7 @@ public class ParentActivity extends AppCompatActivity {
                             Bitmap bitmap = BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.length);
                             bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
                             bitmap = Util.getRoundedBitmap(bitmap);
-                            BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+                            BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
                             int densityDpi = Resources.getSystem().getDisplayMetrics().densityDpi;
                             bitmapDrawable.setTargetDensity(densityDpi);
                             getSupportActionBar().setHomeAsUpIndicator(bitmapDrawable);
@@ -289,7 +289,7 @@ public class ParentActivity extends AppCompatActivity {
 
         //MenuItem markAsRead = menu.add(0, R.id.menu_markasread, 0, R.string.contextmenu_markasread);
         MenuItem markAsRead = menu.add(0, R.id.menu_markasread, 0, R.string.contextmenu_markasread);
-        MenuItemCompat.setShowAsAction(markAsRead, MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
+        markAsRead.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         markAsRead.setIcon(android.R.drawable.ic_menu_revert);
 
         MenuItem item = menu.findItem(R.id.menu_cardview);
@@ -326,7 +326,7 @@ public class ParentActivity extends AppCompatActivity {
             }
         }
 
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
         searchView.setOnQueryTextListener(mOnQueryTextListener);
         searchView.setQueryHint(this.getString(R.string.action_bar_search));
 
@@ -498,8 +498,8 @@ public class ParentActivity extends AppCompatActivity {
             FeedData.deletePicturesOfEntry(Long.toString(id));
             mAdapter.getCursor().requery(); // we have no other choice
         } else if (selectedId == CONTEXTMENU_COPYURL) {
-            ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE))
-                    .setText(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag().toString());
+            String url = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag().toString();
+            ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText(url, url));
         } else if (selectedId == R.id.menu_cardview) {
             String str = this.getClass().getName();
             if ("de.bernd.shandschuh.sparserss.RecycleListActivity".equals(str)) {

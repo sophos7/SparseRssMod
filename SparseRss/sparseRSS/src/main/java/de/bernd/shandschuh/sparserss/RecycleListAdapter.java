@@ -25,6 +25,7 @@
 
 package de.bernd.shandschuh.sparserss;
 
+import android.content.res.Resources;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
@@ -154,7 +155,7 @@ public class RecycleListAdapter extends EntriesListAdapter {
 						}
 						bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
 						bitmap = Util.getRoundedBitmap(bitmap);
-						BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+						BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 						bitmapDrawable.setTargetDensity(densityDpi);	
 						dateTextView.setCompoundDrawablesWithIntrinsicBounds(bitmapDrawable, null, null,  null);
 					} else {

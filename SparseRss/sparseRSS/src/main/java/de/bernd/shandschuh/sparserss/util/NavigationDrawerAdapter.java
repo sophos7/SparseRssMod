@@ -1,5 +1,6 @@
 package de.bernd.shandschuh.sparserss.util;
 
+import androidx.core.content.ContextCompat;
 import java.util.ArrayList;
 
 import com.amulyakhare.textdrawable.TextDrawable;
@@ -57,9 +58,9 @@ public class NavigationDrawerAdapter extends BaseAdapter {
 		Drawable drawable;
 		String titel;
 		if(Util.isLightTheme(context)){
-			drawable = context.getResources().getDrawable( R.drawable.ic_arrow_left_light);
+			drawable = ContextCompat.getDrawable(context, R.drawable.ic_arrow_left_light);
 		}else{
-			drawable = context.getResources().getDrawable( R.drawable.ic_arrow_left_dark);
+			drawable = ContextCompat.getDrawable(context, R.drawable.ic_arrow_left_dark);
 		}
 		titel = "Sparse rss Mod";
 		mListeNavDrawerEntries.add(new NavDrawerLineEntry(drawable, titel, R.id.menu_overview)); //  R.id.cancel_action));
@@ -71,28 +72,28 @@ public class NavigationDrawerAdapter extends BaseAdapter {
 //		drawable = context.getResources().getDrawable( R.drawable.icon );
 		Bitmap bitmap = BitmapFactory.decodeResource (context.getResources(), R.drawable.icon);
 		bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);		
-		BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+		BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 		bitmapDrawable.setTargetDensity(densityDpi);	
 		titel = context.getResources().getString(R.string.all);
 		mListeNavDrawerEntries.add(new NavDrawerLineEntry(bitmapDrawable, titel, R.id.menu_alle));
 		
 		bitmap = BitmapFactory.decodeResource (context.getResources(), R.drawable.ic_terrain_grey600_48dp);
 		bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);		
-		bitmapDrawable = new BitmapDrawable(bitmap);
+		bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 		bitmapDrawable.setTargetDensity(densityDpi);
 		titel = context.getResources().getString(R.string.topfeeds);
 		mListeNavDrawerEntries.add(new NavDrawerLineEntry(bitmapDrawable, titel, R.id.menu_alle_top_feeds));
 		
 		bitmap = BitmapFactory.decodeResource (context.getResources(), R.drawable.ic_save_grey600_48dp);
 		bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);		
-		bitmapDrawable = new BitmapDrawable(bitmap);
+		bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 		bitmapDrawable.setTargetDensity(densityDpi);		
 		titel = context.getResources().getString(R.string.offline);
 		mListeNavDrawerEntries.add(new NavDrawerLineEntry(bitmapDrawable, titel, R.id.menu_alle_offline));
 		
 		bitmap = BitmapFactory.decodeResource (context.getResources(), android.R.drawable.star_big_off);
 		bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);		
-		bitmapDrawable = new BitmapDrawable(bitmap);
+		bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 		bitmapDrawable.setTargetDensity(densityDpi);
 		titel = context.getResources().getString(R.string.favorites);
 		mListeNavDrawerEntries.add(new NavDrawerLineEntry(bitmapDrawable, titel, R.id.menu_favorites));
@@ -121,7 +122,7 @@ public class NavigationDrawerAdapter extends BaseAdapter {
 						bitmap = BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.length);
 						bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
 						bitmap = Util.getRoundedBitmap(bitmap);
-						bitmapDrawable = new BitmapDrawable(bitmap);
+						bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 						bitmapDrawable.setTargetDensity(densityDpi);
 						mListeNavDrawerEntries.add(new NavDrawerLineEntry(bitmapDrawable, name, id));
 					}else{

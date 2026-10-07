@@ -1,5 +1,6 @@
 package de.bernd.shandschuh.sparserss;
 
+import java.util.Calendar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.job.JobInfo;
@@ -80,6 +81,15 @@ public class Util {
 	public static boolean isWifiConnected(Context context) {
 		NetworkCapabilities capabilities = getActiveNetworkCapabilities(context);
 		return capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+	}
+
+	public static Date startOfToday() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
+		return calendar.getTime();
 	}
 
 	public static void toastMessage(Activity activityIn, final String Text) {

@@ -41,6 +41,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.ResourceCursorAdapter;
@@ -102,10 +103,9 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 		iconPosition = getCursor().getColumnIndex(FeedData.FeedColumns.ICON);
 		COLON = activity.getString(R.string.colon);
 
-		today.setHours(0);
-		today.setMinutes(0);
+		today = Util.startOfToday();
 
-		handler = new Handler();
+		handler = new Handler(Looper.getMainLooper());
 		updateTask = new SimpleTask() {
 			@Override
 			public void runControlled() {
@@ -196,7 +196,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 					if (bitmap != null && bitmap.getHeight() > 0 && bitmap.getWidth() > 0) {
 						bitmap = Bitmap.createScaledBitmap(bitmap, buttonSize, buttonSize, false);
 						bitmap = Util.getRoundedBitmap(bitmap);
-						BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
+						BitmapDrawable bitmapDrawable = new BitmapDrawable(Resources.getSystem(), bitmap);
 						bitmapDrawable.setTargetDensity(densityDpi);	
 						textView.setCompoundDrawablesWithIntrinsicBounds(bitmapDrawable, null, null, null);
 						hatBild=true;
