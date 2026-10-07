@@ -97,7 +97,7 @@ public class SparseRSSAppWidgetProvider extends AppWidgetProvider {
 		
 		RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.homescreenwidget);
 		
-		views.setOnClickPendingIntent(R.id.feed_icon, PendingIntent.getActivity(context, 0, new Intent(context, RSSOverview.class), 0));
+		views.setOnClickPendingIntent(R.id.feed_icon, PendingIntent.getActivity(context, 0, new Intent(context, RSSOverview.class), PendingIntent.FLAG_IMMUTABLE));
 		
 		int k = 0;
 		
@@ -130,7 +130,7 @@ public class SparseRSSAppWidgetProvider extends AppWidgetProvider {
 				views.setViewVisibility(ICON_IDS[k], View.GONE);
 				views.setTextViewText(IDS[k], cursor.getString(0));
 			}
-			views.setOnClickPendingIntent(IDS[k++], PendingIntent.getActivity(context, 0, new Intent(Intent.ACTION_VIEW, FeedData.EntryColumns.ENTRY_CONTENT_URI(cursor.getString(1))), PendingIntent.FLAG_CANCEL_CURRENT));
+			views.setOnClickPendingIntent(IDS[k++], PendingIntent.getActivity(context, 0, new Intent(Intent.ACTION_VIEW, FeedData.EntryColumns.ENTRY_CONTENT_URI(cursor.getString(1))), PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 		}
 		cursor.close();
 		for (; k < IDS.length; k++) {
