@@ -27,6 +27,7 @@ package de.bernd.shandschuh.sparserss;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.job.JobScheduler;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
@@ -40,35 +41,30 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import de.bernd.shandschuh.sparserss.R;
-import de.bernd.shandschuh.sparserss.service.RefreshService;
 
 import static de.bernd.shandschuh.sparserss.RSSOverview.chooseColorDialog;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {
+	private static final int REFRESH_JOB_ID = 1;
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
+			Util.scheduleJob(this, true);
+		} else {
+			getSystemService(JobScheduler.class).cancel(REFRESH_JOB_ID);
+		}
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Util.setTheme(this);
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 		
-		Preference preference = (Preference) findPreference(Strings.SETTINGS_REFRESHENABLED);
+		Preference preference;
 
-		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				if (Boolean.TRUE.equals(newValue)) {
-					new Thread() {
-						public void run() {
-							startService(new Intent(ApplicationPreferencesActivity.this, RefreshService.class));
-						}
-					}.start();
-				} else {
-					getPreferences(MODE_PRIVATE).edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, 0).commit();
-					stopService(new Intent(ApplicationPreferencesActivity.this, RefreshService.class));
-				}
-				return true;
-			}
-		});
-		
 //		preference = (Preference) findPreference(Strings.SETTINGS_SHOWTABS);
 //		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 //			public boolean onPreferenceChange(Preference preference, Object newValue) {

@@ -34,7 +34,6 @@
         android:testOnly="false"
         android:theme="@style/MyThemeDark" >
         <!--
-        <service android:name=".service.RefreshService" />
         <service android:name=".service.FetcherService" />
         -->
         <service
@@ -128,12 +127,6 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widgetinfo" />
-        </receiver>
-        <receiver android:name=".RefreshBroadcastReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="de.bernd.shandschuh.sparserss.REFRESH" />
-            </intent-filter>
         </receiver>
         <receiver android:name=".BootCompletedBroadcastReceiver"
             android:exported="true">
