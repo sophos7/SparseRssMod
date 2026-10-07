@@ -207,7 +207,7 @@ public class RecycleListAdapter extends EntriesListAdapter {
 		coverView.setVisibility(View.VISIBLE);
 		if(imageFile.exists()){
 			BitmapImageViewTarget roundedImageTarget = Util.getRoundedImageTarget(context, coverView, 30.0f);
-			Glide.with(context).load(imageFile).asBitmap().centerCrop().into(roundedImageTarget);
+			Glide.with(context).asBitmap().load(imageFile).centerCrop().into(roundedImageTarget);
 		}else {
 			if (linkGrafik==null){
 				linkGrafik=cursor.getString(grafikLinkColumn);				
@@ -216,7 +216,7 @@ public class RecycleListAdapter extends EntriesListAdapter {
 				try {
 					URL url = new URL(linkGrafik);
 					BitmapImageViewTarget roundedImageTarget = Util.getRoundedImageTarget(context, coverView, 30.0f);
-					Glide.with(context).load(url).asBitmap().centerCrop().into(roundedImageTarget);
+					Glide.with(context).asBitmap().load(url.toString()).centerCrop().into(roundedImageTarget);
 				} catch (Exception e) {
 					System.err.println("Err Loading direct " + linkGrafik);
 					hasImmage=false;
