@@ -25,11 +25,14 @@
 
 package de.bernd.shandschuh.sparserss;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
@@ -46,7 +49,7 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		Util.setTheme(this);
 		super.onCreate(savedInstanceState);
-		addPreferencesFromResource(R.layout.preferences);
+		addPreferencesFromResource(R.xml.preferences);
 		
 		Preference preference = (Preference) findPreference(Strings.SETTINGS_REFRESHENABLED);
 
@@ -81,9 +84,6 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				Intent intent = new Intent(ApplicationPreferencesActivity.this, ApplicationPreferencesActivity.class);
 				chooseColorDialog(ApplicationPreferencesActivity.this,intent );
-				if(RSSOverview.INSTANCE!=null){
-					RSSOverview.INSTANCE.finish();
-				}
 				/**
 				Editor editor = PreferenceManager.getDefaultSharedPreferences(ApplicationPreferencesActivity.this).edit();
 				
@@ -96,6 +96,17 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 			}
 		});
 		
+		preference = (Preference) findPreference(Strings.SETTINGS_NOTIFICATIONSENABLED);
+		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				if (Boolean.TRUE.equals(newValue) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+						&& checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+					requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 0);
+				}
+				return true;
+			}
+		});
+
 		preference = (Preference) findPreference(Strings.SETTINGS_EFFICIENTFEEDPARSING);
 		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(final Preference preference, Object newValue) {

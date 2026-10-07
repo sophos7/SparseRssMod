@@ -479,7 +479,7 @@ public class Util {
 			Log.d("Util", "Util . SCHEDULEJOB jobInfo " + jobInfo.getId());
 		}
 
-		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS));
+		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS).setPackage(context.getPackageName()));
 		context.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE));
 	}
 

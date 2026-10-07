@@ -1,5 +1,6 @@
 package de.bernd.shandschuh.sparserss.service;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -14,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioAttributes;
@@ -27,6 +29,7 @@ import android.provider.BaseColumns;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.util.Xml;
 import android.view.View;
@@ -192,7 +195,8 @@ public class RssJobService extends JobService {
                 if (preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSENABLED, false)) {
                     // oder mNotificationManagerCompat !=null
 
-                    boolean areNotificationsEnabled = mNotificationManagerCompat.areNotificationsEnabled();
+                    boolean areNotificationsEnabled = mNotificationManagerCompat.areNotificationsEnabled()
+                            && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                     if (!areNotificationsEnabled) {
                         // Because the user took an action to create a notification, we create a prompt to let
                         // the user re-enable notifications for this application again.
@@ -209,7 +213,7 @@ public class RssJobService extends JobService {
 
                         Intent notificationIntent = new Intent(this, RSSOverview.class);
 
-                        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
                         if(sGlobalNotificationCompatBuilder==null){
                             String channelId=createNotificationChannel(this);
