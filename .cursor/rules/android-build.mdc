@@ -6,9 +6,13 @@ alwaysApply: true
 # Sparse RSS (Android, Java)
 
 - The Gradle project root is `SparseRss/`; the only module is `:sparseRSS` (not `app`). Source is Java with Views and AndroidX.
+- Toolchain: AGP 9.x, Gradle 9.x, Java 17, minSdk 23, targetSdk 36, compileSdk 37.
 - Build with JDK 17: `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home sh ./gradlew :sparseRSS:assembleDebug` from `SparseRss/` (`gradlew` is not marked executable).
+- Run `:sparseRSS:clean` after moving or deleting resources; incremental builds can report stale `R` errors. Do not filter build output with `head`, it hides errors.
 - `local.properties` (SDK path) is git-ignored; AGP downloads missing SDK platforms on demand.
 - Package and `applicationId` is `de.bernd.shandschuh.sparserss`. Do not change it casually: it is what existing installs, the content provider and the custom permissions are keyed on.
-- Keep `android.nonFinalResIds=false` until the `switch (R.id...)` blocks are converted to `if`/`else`.
+- Targeting API 35+ forces edge-to-edge: `SparseRssApplication` pads each activity's content by the system bar insets. Handle back with `OnBackPressedCallback`, not `onBackPressed`.
+- Settings use `androidx.preference` fragments; OPML import/export uses the Storage Access Framework; background refresh is `RssJobService` via `JobScheduler` (rescheduled with `Util.enqueueJob`).
+- Run `:sparseRSS:lintDebug` before finishing; it must report 0 errors.
 - Make small commits, one concern each (toolchain, behavior change, feature), and verify the debug build after every Gradle or manifest change.
 - Use Android Studio for Gradle sync, emulator or device runs, Logcat and the layout editor; use Cursor for edits and refactors.
