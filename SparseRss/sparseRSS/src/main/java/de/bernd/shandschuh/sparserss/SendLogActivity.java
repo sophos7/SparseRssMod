@@ -16,10 +16,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+
+import de.bernd.shandschuh.sparserss.util.BackgroundTask;
 
 public class SendLogActivity extends Activity {
 	// bah
@@ -203,23 +204,23 @@ public class SendLogActivity extends Activity {
 			}
 		}
 
-		mCollectLogTask = (CollectLogTask) new CollectLogTask().execute(list);
+		mCollectLogTask = new CollectLogTask();
+		mCollectLogTask.execute(list);
 	}
 
-	private class CollectLogTask extends AsyncTask<ArrayList<String>, Void, StringBuilder> {
+	private class CollectLogTask extends BackgroundTask<ArrayList<String>, StringBuilder> {
 		@Override
 		protected void onPreExecute() {
 			showProgressDialog(getString(R.string.acquiring_log_progress_dialog_message));
 		}
 
 		@Override
-		protected StringBuilder doInBackground(ArrayList<String>... params) {
+		protected StringBuilder doInBackground(ArrayList<String> arguments) {
 			// final StringBuilder log = new StringBuilder();
 			try {
 				ArrayList<String> commandLine = new ArrayList<String>();
 				commandLine.add("logcat");//$NON-NLS-1$
 				commandLine.add("-d");//$NON-NLS-1$
-				ArrayList<String> arguments = ((params != null) && (params.length > 0)) ? params[0] : null;
 				if (null != arguments) {
 					commandLine.addAll(arguments);
 				}
@@ -303,8 +304,8 @@ public class SendLogActivity extends Activity {
 	}
 
 	void cancellCollectTask() {
-		if (mCollectLogTask != null && mCollectLogTask.getStatus() == AsyncTask.Status.RUNNING) {
-			mCollectLogTask.cancel(true);
+		if (mCollectLogTask != null && mCollectLogTask.isRunning()) {
+			mCollectLogTask.cancel();
 			mCollectLogTask = null;
 		}
 	}

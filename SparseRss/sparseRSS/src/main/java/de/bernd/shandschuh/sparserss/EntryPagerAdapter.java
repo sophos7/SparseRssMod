@@ -14,7 +14,6 @@ import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
 
@@ -55,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.FeedDataContentProvider;
+import de.bernd.shandschuh.sparserss.util.BackgroundTask;
 import de.bernd.shandschuh.sparserss.util.HtmlUtils;
 import de.jetwick.snacktory.HtmlFetcher;
 import de.jetwick.snacktory.JResult;
@@ -469,16 +469,16 @@ public class EntryPagerAdapter extends PagerAdapter {
         mAktuellePosition = pos;
     }
 
-    public class AsyncVeryNewReadability extends AsyncTask<DtoEntry, Void, Void> {
+    public class AsyncVeryNewReadability extends BackgroundTask<DtoEntry, Void> {
 
         DtoEntry dto;
         File aimageFile = null;
 
         @Override
-        protected Void doInBackground(DtoEntry... params) {
+        protected Void doInBackground(DtoEntry entry) {
 
             try {
-                dto = params[0];
+                dto = entry;
                 if (!dto.isFulltext) {
                     fetchHtmlSeite(dto);
                 }
@@ -524,7 +524,6 @@ public class EntryPagerAdapter extends PagerAdapter {
 
         @Override
         protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
 
             checkViews(dto, null);
 
@@ -559,16 +558,16 @@ public class EntryPagerAdapter extends PagerAdapter {
     }
 
 
-    public class AsyncReadability4J extends AsyncTask<DtoEntry, Void, Void> {
+    public class AsyncReadability4J extends BackgroundTask<DtoEntry, Void> {
 
         DtoEntry dto;
         File aimageFile = null;
 
         @Override
-        protected Void doInBackground(DtoEntry... params) {
+        protected Void doInBackground(DtoEntry entry) {
 
             try {
-                dto = params[0];
+                dto = entry;
 
                 // Kopie in RssJobService
 
@@ -621,7 +620,6 @@ public class EntryPagerAdapter extends PagerAdapter {
 
         @Override
         protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
             checkViews(dto, null);
 
             dto.text = mContext.getCSS(mContext) + "<body>" + "<b>" + dto.titel + "</b>" + dto.text + "<br><br></body>";
@@ -645,15 +643,15 @@ public class EntryPagerAdapter extends PagerAdapter {
         }
     }
 
-    public class AsyncAmpRead extends AsyncTask<DtoEntry, Void, Void> {
+    public class AsyncAmpRead extends BackgroundTask<DtoEntry, Void> {
 
         DtoEntry dto;
 
         @Override
-        protected Void doInBackground(DtoEntry... params) {
+        protected Void doInBackground(DtoEntry entry) {
 
             try {
-                dto = params[0];
+                dto = entry;
 
                 String bahtml = "";
                 HttpURLConnection connection = null;
@@ -706,7 +704,6 @@ public class EntryPagerAdapter extends PagerAdapter {
 
         @Override
         protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
 
             if (dto.linkAmp != null) {
                 checkViews(dto, null);
@@ -826,15 +823,15 @@ public class EntryPagerAdapter extends PagerAdapter {
         }
     }
 
-    public class AsyncMobilizeBody extends AsyncTask<DtoEntry, Void, Void> {
+    public class AsyncMobilizeBody extends BackgroundTask<DtoEntry, Void> {
 
         DtoEntry dto;
 
         @Override
-        protected Void doInBackground(DtoEntry... params) {
+        protected Void doInBackground(DtoEntry entry) {
 
             try {
-                dto = params[0];
+                dto = entry;
 
                 String bahtml = "";
                 HttpURLConnection connection = null;
@@ -879,7 +876,6 @@ public class EntryPagerAdapter extends PagerAdapter {
 
         @Override
         protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
 
             // checkViews(dto, null);
 
@@ -891,15 +887,15 @@ public class EntryPagerAdapter extends PagerAdapter {
 
     static final String googleweblight = "https://googleweblight.com/?lite_url=";
 
-    public class AsyncGoogleRead extends AsyncTask<DtoEntry, Void, Void> {
+    public class AsyncGoogleRead extends BackgroundTask<DtoEntry, Void> {
 
         DtoEntry dto;
 
         @Override
-        protected Void doInBackground(DtoEntry... params) {
+        protected Void doInBackground(DtoEntry entry) {
 
             try {
-                dto = params[0];
+                dto = entry;
 
                 // dto.linkAmp=googleweblight+dto.link; // ansicht unver?ndert
                 dto.link = googleweblight + dto.link;
@@ -915,7 +911,6 @@ public class EntryPagerAdapter extends PagerAdapter {
 
         @Override
         protected void onPostExecute(Void result) {
-            super.onPostExecute(result);
 
             if (dto.linkAmp != null) {
                 checkViews(dto, null);
