@@ -40,5 +40,8 @@
         <item name="android:textColorSecondary">?attr/theme_textColorSecondary</item>
     </style>
 
-
+    <style name="Theme.Light" parent="android:Theme.DeviceDefault.Light"/>
+    <style name="ButtonBar" parent="@android:style/DeviceDefault.ButtonBar.AlertDialog"/>
+    <style name="Theme.Dialog" parent="android:Theme.DeviceDefault.Dialog"/>
+    <style name="Widget.Button.Dialog" parent="@android:style/Widget.DeviceDefault.Button.Borderless"/>
 </resources>

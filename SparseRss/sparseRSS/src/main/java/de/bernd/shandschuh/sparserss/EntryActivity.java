@@ -33,7 +33,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import androidx.preference.PreferenceManager;
 import android.content.ClipData;
@@ -756,21 +755,18 @@ public class EntryActivity extends AppCompatActivity implements android.widget.S
 
 
     public void setZoomsScale(WebView nWebView) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-
-            try {
-                if (nWebView == null) {
-                    View view = this.getCurrentFocus();
-                    if (view == null || !(view instanceof WebView)) {
-                        nWebView = (WebView) view;
-                    } else {
-                        nWebView = (WebView) this.findViewById(R.id.web_view);
-                    }
+        try {
+            if (nWebView == null) {
+                View view = this.getCurrentFocus();
+                if (view instanceof WebView) {
+                    nWebView = (WebView) view;
+                } else {
+                    nWebView = (WebView) this.findViewById(R.id.web_view);
                 }
-                nWebView.getSettings().setTextZoom(mIntScalePercent * 2);
-            } catch (Exception e) {
-                Util.toastMessage(this, "Select WebView");
             }
+            nWebView.getSettings().setTextZoom(mIntScalePercent * 2);
+        } catch (Exception e) {
+            Util.toastMessage(this, "Select WebView");
         }
     }
 

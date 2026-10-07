@@ -229,8 +229,11 @@ public class Util {
 			return null;
 		}
 		imageFolder = context.getExternalFilesDir("images");
+		if (imageFolder == null) {
+			imageFolder = new File(context.getFilesDir(), "images");
+		}
 		if (!imageFolder.exists()) {
-			imageFolder.mkdir();
+			imageFolder.mkdirs();
 		}
 		return imageFolder;
 	}

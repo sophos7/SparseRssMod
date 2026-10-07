@@ -13,7 +13,6 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import androidx.preference.PreferenceManager;
 
 import androidx.core.widget.NestedScrollView;
@@ -528,12 +527,7 @@ public class EntryPagerAdapter extends PagerAdapter {
                 dto.text = dto.titel + dto.text + "<br><br></body>";
 
                 String baseUrl = EntryActivity.getBaseUrl(dto.link);
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                    // BaseUrl unter android 4 zeigt html als Text
-                    dto.viewWeb.loadData(dto.text, "text/html; charset=UTF-8", "utf-8");
-                } else {
-                    dto.viewWeb.loadDataWithBaseURL(baseUrl, dto.text, "text/html", Encoding.UTF_8.toString(), null);
-                }
+                dto.viewWeb.loadDataWithBaseURL(baseUrl, dto.text, "text/html", Encoding.UTF_8.toString(), null);
 
                 if (aimageFile != null) {
                     if(mContext!=null && !mContext.isDestroyed()){
@@ -731,12 +725,7 @@ public class EntryPagerAdapter extends PagerAdapter {
         checkViews(dto, null);
         String baseUrl = EntryActivity.getBaseUrl(dto.link);
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            // BaseUrl unter android 4 zeigt html als Text
-            dto.viewWeb.loadData(dto.text, "text/html; charset=UTF-8", "utf-8");
-        } else {
-            dto.viewWeb.loadDataWithBaseURL(baseUrl, dto.text, "text/html", Encoding.UTF_8.toString(), null);
-        }
+        dto.viewWeb.loadDataWithBaseURL(baseUrl, dto.text, "text/html", Encoding.UTF_8.toString(), null);
 
         // reload ohne immage
         if (dto.viewImage != null) {
