@@ -477,7 +477,7 @@ public class ParentActivity extends AppCompatActivity {
                     }.start();
                 }
             });
-            builder.setNegativeButton(android.R.string.no, null);
+            builder.setNegativeButton(android.R.string.cancel, null);
             builder.show();
         } else if (selectedId == CONTEXTMENU_MARKASREAD_ID) {
             long id = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id;
