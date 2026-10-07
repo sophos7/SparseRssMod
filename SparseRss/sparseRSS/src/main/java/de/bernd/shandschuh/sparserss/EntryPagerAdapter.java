@@ -15,7 +15,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import androidx.core.widget.NestedScrollView;
 import androidx.viewpager.widget.PagerAdapter;

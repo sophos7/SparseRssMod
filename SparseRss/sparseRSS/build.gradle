@@ -25,6 +25,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.core:core:1.19.1'
     implementation platform('org.jetbrains.kotlin:kotlin-bom:2.4.20')
     implementation 'org.jsoup:jsoup:1.23.2'
@@ -64,3 +65,7 @@ android {
     namespace 'de.bernd.shandschuh.sparserss'
 }
 
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Xlint:deprecation' << '-Xmaxwarns' << '1000'
+}

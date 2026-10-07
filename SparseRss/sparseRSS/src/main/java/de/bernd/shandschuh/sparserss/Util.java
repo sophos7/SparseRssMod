@@ -29,7 +29,7 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.PersistableBundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.widget.ImageView;

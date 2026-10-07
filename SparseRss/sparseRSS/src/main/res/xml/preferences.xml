@@ -86,8 +86,7 @@
             android:defaultValue="false"
             android:summary="@string/settings_notificationsenabled_description"
             android:key="notifications.enabled" />
-        <RingtonePreference
-            android:ringtoneType="notification"
+        <Preference
             android:summary="@string/settings_notificationsringtone_description"
             android:title="@string/settings_notificationsringtone"
             android:key="notifications.ringtone"
@@ -117,7 +116,8 @@
             android:defaultValue="true"
             android:summary="@string/settings_enableefficientfeedparsing_description"
             android:key="efficientfeedparsing" />
-        <PreferenceScreen android:title="Proxy">
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Proxy">
             <CheckBoxPreference
                 android:key="proxy.enabled"
                 android:title="@string/settings_enabled" />
@@ -144,6 +144,5 @@
                 android:entries="@array/settings_proxytypes_names"
                 android:entryValues="@array/settings_proxytypes"
                 android:dependency="proxy.enabled"/>
-        </PreferenceScreen>
     </PreferenceCategory>
 </PreferenceScreen>

@@ -21,7 +21,7 @@ import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import com.google.android.material.snackbar.Snackbar;
 import androidx.core.app.NotificationCompat;

@@ -28,7 +28,7 @@ package de.bernd.shandschuh.sparserss.handler;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.Html;
 
 import org.xml.sax.Attributes;

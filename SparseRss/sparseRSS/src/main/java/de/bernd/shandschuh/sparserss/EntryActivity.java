@@ -35,7 +35,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.ClipboardManager;
 import android.view.KeyEvent;
 import android.view.Menu;
