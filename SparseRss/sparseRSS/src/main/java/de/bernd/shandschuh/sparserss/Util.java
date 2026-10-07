@@ -1,8 +1,6 @@
 package de.bernd.shandschuh.sparserss;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -26,6 +24,9 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
@@ -64,6 +65,22 @@ public class Util {
 	 */
 	public static final int colDarkGrey=0xFF737373;
 
+
+	private static NetworkCapabilities getActiveNetworkCapabilities(Context context) {
+		ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		Network network = connectivityManager.getActiveNetwork();
+		return network == null ? null : connectivityManager.getNetworkCapabilities(network);
+	}
+
+	public static boolean isNetworkConnected(Context context) {
+		NetworkCapabilities capabilities = getActiveNetworkCapabilities(context);
+		return capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+	}
+
+	public static boolean isWifiConnected(Context context) {
+		NetworkCapabilities capabilities = getActiveNetworkCapabilities(context);
+		return capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+	}
 
 	public static void toastMessage(Activity activityIn, final String Text) {
 		if (activityIn == null) {
@@ -112,13 +129,7 @@ public class Util {
 	////////////////////////////////////////////////////////
 
 	public static boolean isCurrentlyRefreshing(Activity activity) {
-		ActivityManager manager = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
-		for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-			if (RssJobService.class.getName().equals(service.service.getClassName())) {
-				return true;
-			}
-		}
-		return false;
+		return RssJobService.isRunning();
 	}
 
 	private static Boolean LIGHTTHEME;
@@ -438,6 +449,12 @@ public class Util {
 	private static final String SIXTYMINUTES = "3600000";
 
 	public static void scheduleJob(Context context, final boolean doShedule) {
+		enqueueJob(context, doShedule);
+		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS).setPackage(context.getPackageName()));
+		context.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE));
+	}
+
+	public static void enqueueJob(Context context, final boolean doShedule) {
 
 		// aus // "Scheduling job in BootCompletedBroadcastReceiver");
 		Log.d("Util", "Util . SCHEDULEJOB " + doShedule);
@@ -478,9 +495,6 @@ public class Util {
 			JobInfo jobInfo=tm.getAllPendingJobs().get(i);
 			Log.d("Util", "Util . SCHEDULEJOB jobInfo " + jobInfo.getId());
 		}
-
-		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS).setPackage(context.getPackageName()));
-		context.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE));
 	}
 
 	public static void jobInfos(Context context) {

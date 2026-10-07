@@ -19,11 +19,8 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioAttributes;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.BaseColumns;
 import com.google.android.material.snackbar.Snackbar;
@@ -82,10 +79,17 @@ public class RssJobService extends JobService {
 
     private static final String TAG = RssJobService.class.getSimpleName();
 
+    private static volatile boolean sRunning = false;
+
+    public static boolean isRunning() {
+        return sRunning;
+    }
+
     // just for Log
     @Override
     public void onCreate() {
         super.onCreate();
+        sRunning = true;
         Log.i(TAG, "RssJobService Service created");
 
         // notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -101,6 +105,7 @@ public class RssJobService extends JobService {
 
     @Override
     public void onDestroy() {
+        sRunning = false;
         if(RSSOverview.INSTANCE!=null)
             RSSOverview.INSTANCE.zeigeProgressBar(false);
         super.onDestroy();
@@ -113,34 +118,24 @@ public class RssJobService extends JobService {
         // Huawei: wird nicht aufgerufen
         Log.i(TAG, "RssJobService . ONSTARTJOB ! " + params.getJobId());
 
-        final Context serviceContext=this;
+        final Context serviceContext = getApplicationContext();
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(serviceContext);
+        prefs.edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, new Date().getTime()).apply();
 
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
-
-                Runnable run=new Runnable(){
-
-                    @Override
-                    public void run() {
-                        doTheWork(params);
-                        Log.i(TAG, "RssJobService . ONSTARTJOB DONE ! " + params.getJobId());
-                        jobFinished(params, false); // fertig
-                    }
-                };
-                new Thread(run).start();
+                doTheWork(params);
+                Log.i(TAG, "RssJobService . ONSTARTJOB DONE ! " + params.getJobId());
+                jobFinished(params, false);
+                // Scheduling a job with the same id stops it if still running, so reschedule after jobFinished
+                if (prefs.getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
+                    Util.enqueueJob(serviceContext, true);
+                }
             }
-        }, 0);
+        }).start();
 
-        //if (params.getJobId()==1){
-        if (PreferenceManager.getDefaultSharedPreferences(serviceContext).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
-            Util.scheduleJob(getApplicationContext(), true); // reschedule the job
-        }
-        long lDate = new Date().getTime();
-        PreferenceManager.getDefaultSharedPreferences(serviceContext).edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, lDate).apply();
-        // Return true as there's more work to be done with this job. - also false ends here?!
-        return true; // mit true zieht jobFinished( )
+        return true; // work continues on the thread until jobFinished()
     }
 
     @Override
@@ -169,12 +164,9 @@ public class RssJobService extends JobService {
 
         Log.i(TAG, "doTheWork");
 
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-        if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED ) {
-            if (preferences.getBoolean(Strings.SETTINGS_PROXYENABLED, false) && (networkInfo.getType() == ConnectivityManager.TYPE_WIFI || !preferences.getBoolean(Strings.SETTINGS_PROXYWIFIONLY, false))) {
+        if (Util.isNetworkConnected(this)) {
+            final boolean onWifi = Util.isWifiConnected(this);
+            if (preferences.getBoolean(Strings.SETTINGS_PROXYENABLED, false) && (onWifi || !preferences.getBoolean(Strings.SETTINGS_PROXYWIFIONLY, false))) {
                 try {
                     proxy = new Proxy(ZERO.equals(preferences.getString(Strings.SETTINGS_PROXYTYPE, ZERO)) ? Proxy.Type.HTTP : Proxy.Type.SOCKS, new InetSocketAddress(preferences.getString(Strings.SETTINGS_PROXYHOST, Strings.EMPTY), Integer.parseInt(preferences.getString(Strings.SETTINGS_PROXYPORT, Strings.DEFAULTPROXYPORT))));
                 } catch (Exception e) {
@@ -187,7 +179,7 @@ public class RssJobService extends JobService {
             String feedid=params.getExtras().getString(Strings.FEEDID);
             Boolean boOverreideWifiOnly=preferences.getBoolean(Strings.SETTINGS_OVERRIDEWIFIONLY, false);
 
-            int newCount = RssJobService.refreshFeedsStatic(this, feedid, networkInfo, boOverreideWifiOnly);
+            int newCount = RssJobService.refreshFeedsStatic(this, feedid, onWifi, boOverreideWifiOnly);
             // new, not unread
 
             if (newCount > 0) {
@@ -198,9 +190,7 @@ public class RssJobService extends JobService {
                     boolean areNotificationsEnabled = mNotificationManagerCompat.areNotificationsEnabled()
                             && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                     if (!areNotificationsEnabled) {
-                        // Because the user took an action to create a notification, we create a prompt to let
-                        // the user re-enable notifications for this application again.
-                        Util.toastMessageLong(RSSOverview.INSTANCE, "You need to enable notifications for this app");
+                        Log.w(TAG, "Notifications are enabled in settings but blocked by the system");
                     }else{
 
                         Cursor cursor = getContentResolver().query(FeedData.EntryColumns.CONTENT_URI, new String[] {COUNT}, new StringBuilder(FeedData.EntryColumns.READDATE).append(Strings.DB_ISNULL).toString(), null, null);
@@ -409,10 +399,10 @@ public class RssJobService extends JobService {
     private static final String ENCODING = "encoding=\"";
 
 
-    private static int refreshFeedsStatic(Context context, String feedId, NetworkInfo networkInfo, boolean overrideWifiOnly) {
+    private static int refreshFeedsStatic(Context context, String feedId, boolean onWifi, boolean overrideWifiOnly) {
         String selection = null;
 
-        if (!overrideWifiOnly && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
+        if (!overrideWifiOnly && !onWifi) {
             selection = new StringBuilder(FeedData.FeedColumns.WIFIONLY).append("=0 or ").append(FeedData.FeedColumns.WIFIONLY).append(" IS NULL").toString(); // "IS NOT 1" does not work on 2.1
         }
 

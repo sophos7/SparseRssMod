@@ -40,8 +40,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -394,12 +392,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
             final String id = Long.toString(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id);
 
-            ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(
-                    Context.CONNECTIVITY_SERVICE);
-
-            final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-            if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED) {
+            if (Util.isNetworkConnected(this)) {
 
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(mJobId, mServiceComponent);
 
@@ -984,8 +977,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     public static void chooseColorDialog(Activity activity, Intent intent) {
 
         if(activity.isDestroyed() || activity.isFinishing()){
-            Util.toastMessage(RSSOverview.INSTANCE,"Activity is Dead");
-            System.exit(0);
             return;
         }
         android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(activity);
