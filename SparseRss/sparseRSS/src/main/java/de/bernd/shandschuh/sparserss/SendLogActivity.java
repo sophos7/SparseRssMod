@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,6 +17,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.widget.TextView;
+import android.view.View;
 import android.util.Log;
 
 import de.bernd.shandschuh.sparserss.util.BackgroundTask;
@@ -45,7 +46,7 @@ public class SendLogActivity extends Activity {
 	private AlertDialog mMainDialog;
 	private Intent mSendIntent;
 	private CollectLogTask mCollectLogTask;
-	private ProgressDialog mProgressDialog;
+	private AlertDialog mProgressDialog;
 	private String mAdditonalInfo;
 	private boolean mShowUi;
 	private String[] mFilterSpecs;
@@ -283,17 +284,18 @@ public class SendLogActivity extends Activity {
 	}
 
 	void showProgressDialog(String message) {
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setMessage(message);
-		mProgressDialog.setCancelable(true);
-		mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-			public void onCancel(DialogInterface dialog) {
-				cancellCollectTask();
-				finish();
-			}
-		});
-		mProgressDialog.show();
+		View view = getLayoutInflater().inflate(R.layout.progress_dialog, null);
+		((TextView) view.findViewById(R.id.progress_message)).setText(message);
+		mProgressDialog = new AlertDialog.Builder(this)
+				.setView(view)
+				.setCancelable(true)
+				.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					public void onCancel(DialogInterface dialog) {
+						cancellCollectTask();
+						finish();
+					}
+				})
+				.show();
 	}
 
 	private void dismissProgressDialog() {

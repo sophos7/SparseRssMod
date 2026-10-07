@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -48,7 +49,6 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -67,6 +67,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
@@ -200,8 +201,9 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                                         View sortView = item.findViewById(R.id.sortitem);
 
                                         if (sortView.getLeft() <= event.getX()) {
-                                            item.setDrawingCacheEnabled(true);
-                                            dragedView.setImageBitmap(Bitmap.createBitmap(item.getDrawingCache()));
+                                            Bitmap itemBitmap = Bitmap.createBitmap(item.getWidth(), item.getHeight(), Bitmap.Config.ARGB_8888);
+                                            item.draw(new Canvas(itemBitmap));
+                                            dragedView.setImageBitmap(itemBitmap);
 
                                             layoutParams = new LayoutParams();
                                             layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
@@ -283,6 +285,18 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         } else if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
             Util.scheduleJob(this, true);
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
+                    mDrawerLayout.closeDrawer(mDrawerList);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
 
     } // onCreate
 
@@ -415,7 +429,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             builder.setIcon(android.R.drawable.ic_dialog_alert);
             builder.setTitle(cursor.getString(0));
             builder.setMessage(R.string.question_deletefeed);
-            builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     new Thread() {
                         public void run() {
@@ -428,7 +442,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                     }.start();
                 }
             });
-            builder.setNegativeButton(android.R.string.no, null);
+            builder.setNegativeButton(android.R.string.cancel, null);
             cursor.close();
             builder.show();
         } else if (selectedId == CONTEXTMENU_MARKASREAD_ID) {
@@ -669,7 +683,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         builder.setIcon(android.R.drawable.ic_dialog_alert);
         builder.setTitle(R.string.contextmenu_deleteallentries);
         builder.setMessage(R.string.question_areyousure);
-        builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 new Thread() {
                     public void run() {
@@ -681,7 +695,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 }.start();
             }
         });
-        builder.setNegativeButton(android.R.string.no, null);
+        builder.setNegativeButton(android.R.string.cancel, null);
         builder.show();
     }
 
@@ -835,19 +849,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 selectItem(position);
             }
         });
-    }
-
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_BACK:
-                if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
-                    mDrawerLayout.closeDrawer(mDrawerList);
-                } else {
-                    finish();
-                }
-                return true;
-        }
-        return super.onKeyUp(keyCode, event);
     }
 
     // menu / feedoverview.xml android:onClick="clickJobs"

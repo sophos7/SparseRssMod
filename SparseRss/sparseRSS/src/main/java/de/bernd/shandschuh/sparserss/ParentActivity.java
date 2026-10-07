@@ -463,7 +463,7 @@ public class ParentActivity extends AppCompatActivity {
             builder.setIcon(android.R.drawable.ic_dialog_alert);
             builder.setTitle(R.string.contextmenu_deleteallentries);
             builder.setMessage(R.string.question_areyousure);
-            builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
                     new Thread() {
                         public void run() {
