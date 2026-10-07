@@ -53,6 +53,7 @@ import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 import de.bernd.shandschuh.sparserss.R;
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.service.RssJobService;
@@ -124,7 +125,7 @@ public class MainTabActivity extends TabActivity {
 	{
 		super.onResume();
 		setProgressBarIndeterminateVisibility(isCurrentlyRefreshing());
-		registerReceiver(refreshReceiver, new IntentFilter("de.bernd.shandschuh.sparserss.REFRESH"));
+		ContextCompat.registerReceiver(this, refreshReceiver, new IntentFilter(Strings.ACTION_REFRESHFEEDS), ContextCompat.RECEIVER_NOT_EXPORTED);
 	}
 	
 	@Override

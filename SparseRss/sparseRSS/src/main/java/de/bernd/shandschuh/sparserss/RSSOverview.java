@@ -75,6 +75,7 @@ import androidx.appcompat.app.AlertDialog.Builder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -306,7 +307,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         super.onResume();
 
         zeigeProgressBar(Util.isCurrentlyRefreshing(this));
-        registerReceiver(refreshReceiver, new IntentFilter("de.bernd.shandschuh.sparserss.REFRESH"));
+        ContextCompat.registerReceiver(this, refreshReceiver, new IntentFilter(Strings.ACTION_REFRESHFEEDS), ContextCompat.RECEIVER_NOT_EXPORTED);
 
         if (RssJobService.mNotificationManagerCompat != null) {
             RssJobService.mNotificationManagerCompat.cancelAll();
