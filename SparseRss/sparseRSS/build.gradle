@@ -21,12 +21,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.android.material:material:1.6.1'
-    //implementation 'androidx.annotation:annotation:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.core:core:1.19.1'
     implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
     implementation 'org.jsoup:jsoup:1.15.3'
 
@@ -42,11 +41,11 @@ dependencies {
 }
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         applicationId "de.bernd.shandschuh.sparserss"
-        minSdk 21
+        minSdk 23
         targetSdk 34
     }
 
