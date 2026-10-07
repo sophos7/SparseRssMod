@@ -82,8 +82,6 @@ public class FeedDataContentProvider extends ContentProvider {
 	
 //	public static final File IMAGEFOLDER_FILE = new File(IMAGEFOLDER);
 	
-	private static final String BACKUPOPML = Environment.getExternalStorageDirectory()+"/sparserss/backup.opml";
-	
 	private static UriMatcher URI_MATCHER;
 	
 	private static final String[] PROJECTION_PRIORITY = new String[] {FeedData.FeedColumns.PRIORITY};
@@ -110,13 +108,6 @@ public class FeedDataContentProvider extends ContentProvider {
 		public void onCreate(SQLiteDatabase database) {
 			database.execSQL(createTable(TABLE_FEEDS, FeedData.FeedColumns.COLUMNS, FeedData.FeedColumns.TYPES));
 			database.execSQL(createTable(TABLE_ENTRIES, FeedData.EntryColumns.COLUMNS, FeedData.EntryColumns.TYPES));
-			
-			File backupFile = new File(BACKUPOPML);
-			
-			if (backupFile.exists()) {
-				/** Perform an automated import of the backup */
-				OPML.importFromFile(backupFile, database);
-			}
 		}
 		
 		private String createTable(String tableName, String[] columns, String[] types) {
@@ -263,7 +254,6 @@ public class FeedDataContentProvider extends ContentProvider {
 					oldDatabaseFile.delete();
 					newDatabase.setTransactionSuccessful();
 					newDatabase.endTransaction();
-					OPML.exportToFile(BACKUPOPML, newDatabase);
 				} catch (Exception e) {
 					
 				}
@@ -353,9 +343,6 @@ public class FeedDataContentProvider extends ContentProvider {
 		
 		int count = database.delete(table, where.toString(), selectionArgs);
 		
-		if (table == TABLE_FEEDS) { // == is ok here
-			OPML.exportToFile(BACKUPOPML, database);
-		}
 		if (count > 0) {
 			getContext().getContentResolver().notifyChange(uri, null);
 		}
@@ -398,7 +385,6 @@ public class FeedDataContentProvider extends ContentProvider {
 				}
 				cursor.close();
 				newId = database.insert(TABLE_FEEDS, null, values);
-				OPML.exportToFile(BACKUPOPML, database);
 				break;
 			}
 			case URI_ENTRIES : {
@@ -567,9 +553,6 @@ public class FeedDataContentProvider extends ContentProvider {
 		
 		int count = database.update(table, values, where.toString(), selectionArgs);
 		
-		if (table == TABLE_FEEDS && (values.containsKey(FeedData.FeedColumns.NAME) || values.containsKey(FeedData.FeedColumns.URL) || values.containsKey(FeedData.FeedColumns.PRIORITY))) { // == is ok here
-			OPML.exportToFile(BACKUPOPML, database);
-		}
 		if (count > 0) {
 			getContext().getContentResolver().notifyChange(uri, null);
 		}

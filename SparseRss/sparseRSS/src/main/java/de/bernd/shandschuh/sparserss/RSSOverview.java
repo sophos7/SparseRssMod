@@ -37,12 +37,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.provider.OpenableColumns;
 import android.os.PersistableBundle;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -68,22 +67,22 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AlertDialog.Builder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.snackbar.Snackbar;
 
-import java.io.File;
-import java.io.FilenameFilter;
 
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.OPML;
+import java.io.InputStream;
+import java.io.OutputStream;
 import de.bernd.shandschuh.sparserss.service.RssJobService;
 import de.bernd.shandschuh.sparserss.util.NavigationDrawerAdapter;
 import de.bernd.shandschuh.sparserss.util.NavigationDrawerAdapter.NavDrawerLineEntry;
@@ -92,16 +91,6 @@ import de.bernd.shandschuh.sparserss.util.NavigationDrawerAdapter.NavDrawerLineE
  * Main Class
  */
 public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
-    private static final int DIALOG_ERROR_FEEDIMPORT = 3;
-
-    private static final int DIALOG_ERROR_FEEDEXPORT = 4;
-
-    private static final int DIALOG_ERROR_INVALIDIMPORTFILE = 5;
-
-    private static final int DIALOG_ERROR_EXTERNALSTORAGENOTAVAILABLE = 6;
-
-    private static final int DIALOG_ABOUT = 7;
-
     private static final int CONTEXTMENU_EDIT_ID = 3;
 
     private static final int CONTEXTMENU_REFRESH_ID = 4;
@@ -117,8 +106,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     private static final int CONTEXTMENU_DELETEALLENTRIES_ID = 9;
 
     private static final int CONTEXTMENU_RESETUPDATEDATE_ID = 10;
-
-    private static final int ACTIVITY_APPLICATIONPREFERENCES_ID = 1;
 
     private static final Uri CANGELOG_URI = Uri.parse("https://github.com/AndroidMakesFun/SparseRssMod/blob/master/SparseRss/README.md");
 
@@ -497,8 +484,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                             .CONTENT_URI(Long.toString(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id)),
                     values, null, null);
         } else if (selectedId == R.id.menu_settings) {
-            startActivityForResult(new Intent(this, ApplicationPreferencesActivity.class),
-                    ACTIVITY_APPLICATIONPREFERENCES_ID);
+            startActivity(new Intent(this, ApplicationPreferencesActivity.class));
         } else if (selectedId == R.id.menu_load_last) {
             String entryid = Util.getLastEntryId(this);
             if (entryid == null) {
@@ -520,66 +506,11 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 }
             }.start();
         } else if (selectedId == R.id.menu_about) {
-            showDialog(DIALOG_ABOUT);
+            showAboutDialog();
         } else if (selectedId == R.id.menu_import) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(RSSOverview.this);
-
-            try {
-
-                if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-
-                    String title = "Download Folder";  //+this.getExternalFilesDir("rss");
-                    builder.setTitle(title);
-
-                    final String[] fileNames = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).list(new FilenameFilter() {
-                        public boolean accept(File dir, String filename) {
-                            return new File(dir, filename).isFile();
-                        }
-                    });
-
-                    final RSSOverview rssOverview = this;
-                    builder.setItems(fileNames, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            try {
-                                OPML.importFromFile(
-                                        new StringBuilder(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString())
-                                                .append(File.separator).append(fileNames[which]).toString(),
-                                        RSSOverview.this);
-                            } catch (Exception e) {
-                                showDialog(DIALOG_ERROR_FEEDIMPORT);
-                            }
-                        }
-                    });
-                    if (fileNames.length == 0) {
-                        Util.msgBox(RSSOverview.this, "Empty:\n" + title);
-                    } else {
-                        builder.show();
-                    }
-
-                } else {
-                    requestPermission();
-                }
-
-            } catch (Exception e) {
-                showDialog(DIALOG_ERROR_FEEDIMPORT);
-            }
+            importOpmlLauncher.launch(new String[]{"*/*"});
         } else if (selectedId == R.id.menu_export) {
-            try {
-
-                if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                    String folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString();
-                    String filename = new StringBuilder(folder).append("/sparse_rss_").append(System.currentTimeMillis())
-                            .append(".opml").toString();
-
-                    OPML.exportToFile(filename, this);
-                    Util.msgBox(this, String.format(getString(R.string.message_exportedto), filename));
-                } else {
-                    requestPermission();
-                }
-
-            } catch (Exception e) {
-                showDialog(DIALOG_ERROR_FEEDEXPORT);
-            }
+            exportOpmlLauncher.launch("sparse_rss_" + System.currentTimeMillis() + ".opml");
         } else if (selectedId == R.id.menu_enablefeedsort) {
             setFeedSortEnabled(true);
         } else if (selectedId == R.id.menu_deleteread) {
@@ -608,56 +539,37 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     }
 
 
-    private static final int PERMISSION_REQUEST = 0;
-
-    private void requestPermission() {
-
-//		ActivityCompat.requestPermissions(this,
-//				new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
-//				PERMISSION_REQUEST);
-
-        // Permission has not been granted and must be requested.
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            // Provide an additional rationale to the user if the permission was not granted
-            // and the user would benefit from additional context for the use of the permission.
-            // Display a SnackBar with cda button to request the missing permission.
-            Snackbar.make(listview, R.string.message_permission_download_folder,
-                    Snackbar.LENGTH_INDEFINITE).setAction("ok", new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    // Request the permission
-                    ActivityCompat.requestPermissions(RSSOverview.INSTANCE,
-                            new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            PERMISSION_REQUEST);
+    private final ActivityResultLauncher<String[]> importOpmlLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
+                        OPML.importFromStream(inputStream, this);
+                    } catch (Exception e) {
+                        createErrorDialog(R.string.error_feedimport).show();
+                    }
                 }
-            }).show();
+            });
 
-        } else {
-            Snackbar.make(listview, R.string.message_permission_download_folder, Snackbar.LENGTH_SHORT).show();
-            // Request the permission. The result will be received in onRequestPermissionResult().
-            ActivityCompat.requestPermissions(RSSOverview.INSTANCE,
-                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+    private final ActivityResultLauncher<String> exportOpmlLauncher =
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("text/x-opml"), uri -> {
+                if (uri != null) {
+                    try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
+                        OPML.exportToStream(outputStream, this);
+                        Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
+                    } catch (Exception e) {
+                        createErrorDialog(R.string.error_feedexport).show();
+                    }
+                }
+            });
+
+    private String getDisplayName(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
         }
-
+        return uri.toString();
     }
-
-    /**
-     // access Downloads
-     @Override public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-     switch (requestCode) {
-     case Manifest.:
-     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-     //Granted.
-
-
-     } else {
-     //Denied.
-     }
-     break;
-     }
-     }
-     **/
 
     private void refreshAllFeeds() {
 
@@ -721,51 +633,23 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     // startActivity(intent);
     // }
 
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        Dialog dialog;
+    private void showAboutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(RSSOverview.this);
 
-        switch (id) {
-            case DIALOG_ERROR_FEEDIMPORT: {
-                dialog = createErrorDialog(R.string.error_feedimport);
-                break;
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+        builder.setTitle(R.string.menu_about);
+        setupLicenseText(builder);
+        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
             }
-            case DIALOG_ERROR_FEEDEXPORT: {
-                dialog = createErrorDialog(R.string.error_feedexport);
-                break;
+        });
+        builder.setNeutralButton(R.string.changelog, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                startActivity(new Intent(Intent.ACTION_VIEW, CANGELOG_URI));
             }
-            case DIALOG_ERROR_INVALIDIMPORTFILE: {
-                dialog = createErrorDialog(R.string.error_invalidimportfile);
-                break;
-            }
-            case DIALOG_ERROR_EXTERNALSTORAGENOTAVAILABLE: {
-                dialog = createErrorDialog(R.string.error_externalstoragenotavailable);
-                break;
-            }
-            case DIALOG_ABOUT: {
-                AlertDialog.Builder builder = new AlertDialog.Builder(RSSOverview.this);
-
-                builder.setIcon(android.R.drawable.ic_dialog_info);
-                builder.setTitle(R.string.menu_about);
-                // TODO
-                // MainTabActivity.INSTANCE.setupLicenseText(builder);
-                setupLicenseText(builder);
-                builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                builder.setNeutralButton(R.string.changelog, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        startActivity(new Intent(Intent.ACTION_VIEW, CANGELOG_URI));
-                    }
-                });
-                return builder.create();
-            }
-            default:
-                dialog = null;
-        }
-        return dialog;
+        });
+        builder.show();
     }
 
     private Dialog createErrorDialog(int messageId) {
