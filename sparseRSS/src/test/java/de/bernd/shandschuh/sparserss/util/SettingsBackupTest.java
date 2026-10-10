@@ -1,12 +1,12 @@
 package de.bernd.shandschuh.sparserss.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 
 import org.json.JSONException;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +17,7 @@ public class SettingsBackupTest {
 		Map<String, Object> prefs = new HashMap<>();
 		prefs.put("lighttheme", true);
 		prefs.put("keeptime", "7");
-		prefs.put("count", 3);
-		prefs.put("stamp", 1234567890123L);
-		prefs.put("ratio", 1.5f);
+		prefs.put("SETTINGS_COLOR_MODE", 2);
 
 		Map<String, Object> restored = SettingsBackup.fromJson(SettingsBackup.toJson(prefs));
 
@@ -27,21 +25,21 @@ public class SettingsBackupTest {
 	}
 
 	@Test
-	public void leavesOutDeviceSpecificAndConsentSettings() throws Exception {
+	public void leavesOutDeviceSpecificConsentAndStateEntries() throws Exception {
 		Map<String, Object> prefs = new HashMap<>();
 		prefs.put("notifications.ringtone", "content://media/1");
 		prefs.put("diagnostics.enabled", true);
 		prefs.put("diagnostics.mask", false);
+		prefs.put("lastscheduledrefresh", 1234567890123L);
 		prefs.put("keeptime", "7");
 
 		Map<String, Object> restored = SettingsBackup.fromJson(SettingsBackup.toJson(prefs));
 
-		assertEquals(1, restored.size());
-		assertFalse(restored.containsKey("diagnostics.enabled"));
+		assertEquals(Collections.singletonMap("keeptime", "7"), restored);
 	}
 
 	@Test
-	public void ignoresExcludedKeysInAHandEditedFile() throws Exception {
+	public void ignoresUnknownKeysInAHandEditedFile() throws Exception {
 		String json = "{\"format\":\"sparserss-settings\",\"version\":1,\"settings\":{"
 				+ "\"diagnostics.enabled\":{\"type\":\"boolean\",\"value\":true}}}";
 

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.bernd.shandschuh.sparserss.Strings;
+import de.bernd.shandschuh.sparserss.Util;
 
 /** Exports and imports the app settings as a JSON file. Feeds are handled separately by OPML. */
 public final class SettingsBackup {
@@ -40,11 +41,32 @@ public final class SettingsBackup {
 	private static final String TYPE_LONG = "long";
 	private static final String TYPE_FLOAT = "float";
 
-	/** Device specific or consent related, so never exported or imported. */
-	private static final Set<String> EXCLUDED_KEYS = new HashSet<>(Arrays.asList(
-			Strings.SETTINGS_NOTIFICATIONSRINGTONE,
-			Strings.SETTINGS_DIAGNOSTICS_ENABLED,
-			Strings.SETTINGS_DIAGNOSTICS_MASK));
+	/**
+	 * Only the options from the settings screen travel. Device specific values (ringtone), consent
+	 * (diagnostics) and app state such as the last refresh time stay out.
+	 */
+	private static final Set<String> KEYS = new HashSet<>(Arrays.asList(
+			Strings.SETTINGS_LIGHTTHEME,
+			Util.SETTINGS_COLOR_MODE,
+			Strings.SETTINGS_PRIORITIZE,
+			Strings.SETTINGS_KEEPTIME,
+			Strings.SETTINGS_DISABLEPICTURES,
+			Util.SETTINGS_SHOW_BOTTOM_BAR,
+			Strings.SETTINGS_REFRESHENABLED,
+			Strings.SETTINGS_REFRESHINTERVAL,
+			Strings.SETTINGS_REFRESHONPENENABLED,
+			Strings.SETTINGS_OVERRIDEWIFIONLY,
+			Strings.SETTINGS_ENCLOSUREWARNINGSENABLED,
+			Strings.SETTINGS_NOTIFICATIONSENABLED,
+			Strings.SETTINGS_NOTIFICATIONSVIBRATE,
+			Strings.SETTINGS_STANDARDUSERAGENT,
+			Strings.SETTINGS_HTTPHTTPSREDIRECTS,
+			Strings.SETTINGS_EFFICIENTFEEDPARSING,
+			Strings.SETTINGS_PROXYENABLED,
+			Strings.SETTINGS_PROXYWIFIONLY,
+			Strings.SETTINGS_PROXYHOST,
+			Strings.SETTINGS_PROXYPORT,
+			Strings.SETTINGS_PROXYTYPE));
 
 	private SettingsBackup() {
 	}
@@ -86,7 +108,7 @@ public final class SettingsBackup {
 	static String toJson(Map<String, ?> all) throws JSONException {
 		JSONObject settings = new JSONObject();
 		for (Map.Entry<String, ?> entry : all.entrySet()) {
-			if (EXCLUDED_KEYS.contains(entry.getKey())) {
+			if (!KEYS.contains(entry.getKey())) {
 				continue;
 			}
 			JSONObject item = toItem(entry.getValue());
@@ -110,7 +132,7 @@ public final class SettingsBackup {
 		Map<String, Object> result = new HashMap<>();
 		for (Iterator<String> keys = settings.keys(); keys.hasNext(); ) {
 			String key = keys.next();
-			if (EXCLUDED_KEYS.contains(key)) {
+			if (!KEYS.contains(key)) {
 				continue;
 			}
 			Object value = fromItem(settings.getJSONObject(key));
