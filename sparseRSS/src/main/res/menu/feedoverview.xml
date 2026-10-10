@@ -28,6 +28,12 @@
             android:id="@+id/menu_export"
             android:title="@string/menu_export"/>
         <item
+            android:id="@+id/menu_import_settings"
+            android:title="@string/menu_import_settings"/>
+        <item
+            android:id="@+id/menu_export_settings"
+            android:title="@string/menu_export_settings"/>
+        <item
             android:id="@+id/menu_enablefeedsort"
             android:title="@string/menu_enablefeedsort"/>
         <item

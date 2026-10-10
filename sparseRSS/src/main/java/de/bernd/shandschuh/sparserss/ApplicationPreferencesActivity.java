@@ -25,14 +25,11 @@
 
 package de.bernd.shandschuh.sparserss;
 
-import android.app.job.JobScheduler;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.PreferenceManager;
 
 public class ApplicationPreferencesActivity extends AppCompatActivity {
-	private static final int REFRESH_JOB_ID = 1;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,11 +45,7 @@ public class ApplicationPreferencesActivity extends AppCompatActivity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
-			Util.scheduleJob(this, true);
-		} else {
-			getSystemService(JobScheduler.class).cancel(REFRESH_JOB_ID);
-		}
+		Util.applyRefreshSettings(this);
 	}
 
 }

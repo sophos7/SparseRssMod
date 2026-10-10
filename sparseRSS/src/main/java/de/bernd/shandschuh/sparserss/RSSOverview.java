@@ -82,6 +82,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.OPML;
+import de.bernd.shandschuh.sparserss.util.SettingsBackup;
 import java.io.InputStream;
 import java.io.OutputStream;
 import de.bernd.shandschuh.sparserss.service.RssJobService;
@@ -525,6 +526,10 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             importOpmlLauncher.launch(new String[]{"*/*"});
         } else if (selectedId == R.id.menu_export) {
             exportOpmlLauncher.launch("sparse_rss_" + System.currentTimeMillis() + ".opml");
+        } else if (selectedId == R.id.menu_import_settings) {
+            importSettingsLauncher.launch(new String[]{"*/*"});
+        } else if (selectedId == R.id.menu_export_settings) {
+            exportSettingsLauncher.launch("sparse_rss_settings_" + System.currentTimeMillis() + ".json");
         } else if (selectedId == R.id.menu_enablefeedsort) {
             setFeedSortEnabled(true);
         } else if (selectedId == R.id.menu_deleteread) {
@@ -572,6 +577,32 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                         Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
                     } catch (Exception e) {
                         createErrorDialog(R.string.error_feedexport).show();
+                    }
+                }
+            });
+
+    private final ActivityResultLauncher<String[]> importSettingsLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+                if (uri != null) {
+                    try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
+                        int count = SettingsBackup.importFrom(this, inputStream);
+                        Util.applyRefreshSettings(this);
+                        Util.msgBox(this, getString(R.string.message_settingsimported, count));
+                        recreate();
+                    } catch (Exception e) {
+                        createErrorDialog(R.string.error_settingsimport).show();
+                    }
+                }
+            });
+
+    private final ActivityResultLauncher<String> exportSettingsLauncher =
+            registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+                if (uri != null) {
+                    try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
+                        SettingsBackup.export(this, outputStream);
+                        Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
+                    } catch (Exception e) {
+                        createErrorDialog(R.string.error_settingsexport).show();
                     }
                 }
             });

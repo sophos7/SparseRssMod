@@ -462,6 +462,17 @@ public class Util {
 
 	private static final String SIXTYMINUTES = "3600000";
 
+	private static final int PERIODIC_JOB_ID = 1;
+
+	/** Schedules or cancels the periodic refresh to match the stored settings. */
+	public static void applyRefreshSettings(Context context) {
+		if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
+			scheduleJob(context, true);
+		} else {
+			context.getSystemService(JobScheduler.class).cancel(PERIODIC_JOB_ID);
+		}
+	}
+
 	public static void scheduleJob(Context context, final boolean doShedule) {
 		enqueueJob(context, doShedule);
 		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS).setPackage(context.getPackageName()));

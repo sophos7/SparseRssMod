@@ -37,6 +37,9 @@ dependencies {
     def okhttp_version = '5.5.0'
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
 
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20250517'
+
 }
 
 android {
