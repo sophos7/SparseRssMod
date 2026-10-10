@@ -9,6 +9,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.InputType;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,6 +23,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
+import de.bernd.shandschuh.sparserss.service.RssJobService;
 import de.bernd.shandschuh.sparserss.util.PreferenceUtils;
 
 public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
@@ -53,6 +55,9 @@ public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
 		});
 
 		findPreference(Strings.SETTINGS_NOTIFICATIONSENABLED).setOnPreferenceChangeListener((preference, newValue) -> {
+			if (Boolean.TRUE.equals(newValue)) {
+				RssJobService.createNotificationChannel(requireContext());
+			}
 			if (Boolean.TRUE.equals(newValue) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 					&& ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
 				notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
@@ -60,18 +65,33 @@ public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
 			return true;
 		});
 
-		findPreference(Strings.SETTINGS_NOTIFICATIONSRINGTONE).setOnPreferenceClickListener(preference -> {
-			String current = PreferenceManager.getDefaultSharedPreferences(requireContext())
-					.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
-			Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
-					.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-					.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-					.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
-					.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
-							current == null || current.isEmpty() ? null : Uri.parse(current));
-			ringtoneLauncher.launch(intent);
-			return true;
-		});
+		Preference ringtone = findPreference(Strings.SETTINGS_NOTIFICATIONSRINGTONE);
+		Preference vibrate = findPreference(Strings.SETTINGS_NOTIFICATIONSVIBRATE);
+		Preference channel = findPreference(Strings.SETTINGS_NOTIFICATIONSCHANNEL);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			ringtone.getParent().removePreference(ringtone);
+			vibrate.getParent().removePreference(vibrate);
+			channel.setOnPreferenceClickListener(preference -> {
+				startActivity(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+						.putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().getPackageName())
+						.putExtra(Settings.EXTRA_CHANNEL_ID, RssJobService.CHANNEL_ID));
+				return true;
+			});
+		} else {
+			channel.getParent().removePreference(channel);
+			ringtone.setOnPreferenceClickListener(preference -> {
+				String current = PreferenceManager.getDefaultSharedPreferences(requireContext())
+						.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
+				Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+						.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
+						.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+						.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+						.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+								current == null || current.isEmpty() ? null : Uri.parse(current));
+				ringtoneLauncher.launch(intent);
+				return true;
+			});
+		}
 
 		findPreference(Strings.SETTINGS_EFFICIENTFEEDPARSING).setOnPreferenceChangeListener((preference, newValue) -> {
 			if (Boolean.FALSE.equals(newValue)) {

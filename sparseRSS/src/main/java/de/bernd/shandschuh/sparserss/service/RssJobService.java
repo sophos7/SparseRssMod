@@ -18,7 +18,6 @@ import android.database.Cursor;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.os.Build;
@@ -160,7 +159,7 @@ public class RssJobService extends JobService {
     //private NotificationManager notificationManager;
     public static NotificationManagerCompat mNotificationManagerCompat=null;
     private static NotificationCompat.Builder sGlobalNotificationCompatBuilder = null;
-    private static final String CHANNEL_ID = "4242N";
+    public static final String CHANNEL_ID = "4242N";
     public static final int NOTIFICATION_ID = 8282;
 
 
@@ -247,14 +246,16 @@ public class RssJobService extends JobService {
                                 // visibility is set in the NotificationChannel.
                                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
-                        String ringtone = preferences.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
-                        if (ringtone != null && ringtone.length() > 0) {
-                            sGlobalNotificationCompatBuilder.setSound(Uri.parse(ringtone));
-                        }
-                        boolean bVibrate= preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSVIBRATE, false);
-                        if(bVibrate){
-                            long[] pattern = {0, 1000, 500, 1000};
-                            sGlobalNotificationCompatBuilder.setVibrate(pattern);
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                            // From Android 8 sound and vibration belong to the notification channel
+                            String ringtone = preferences.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
+                            if (ringtone != null && ringtone.length() > 0) {
+                                sGlobalNotificationCompatBuilder.setSound(Uri.parse(ringtone));
+                            }
+                            if (preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSVIBRATE, false)) {
+                                long[] pattern = {0, 1000, 500, 1000};
+                                sGlobalNotificationCompatBuilder.setVibrate(pattern);
+                            }
                         }
                         Notification notification = sGlobalNotificationCompatBuilder.build();
 
@@ -770,51 +771,19 @@ public class RssJobService extends JobService {
         }
     }
 
+    /** Creates the channel on Android 8+; the user changes its sound and vibration in system settings. */
     public static String createNotificationChannel(Context context) {
-
-        // NotificationChannels are required for Notifications on O (API 26) and above.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            // The id of the channel.
-            String channelId = CHANNEL_ID;
-
-            // The user-visible name of the channel.
-            CharSequence channelName = "Sparse RSS";
-            // The user-visible description of the channel.
-            String channelDescription = "Sparse RSS Description";
-            int channelImportance = NotificationManager.IMPORTANCE_DEFAULT;
-            int channelLockscreenVisibility =NotificationCompat.VISIBILITY_PUBLIC;
-
-            // Initializes NotificationChannel.
-            NotificationChannel notificationChannel =
-                    new NotificationChannel(channelId, channelName, channelImportance);
-            notificationChannel.setDescription(channelDescription);
-            boolean bVibrate= preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSVIBRATE, false);
-            notificationChannel.enableVibration(bVibrate);
-            notificationChannel.setLockscreenVisibility(channelLockscreenVisibility);
-            String ringtone = preferences.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
-            if (ringtone != null && ringtone.length() > 0) {
-                AudioAttributes att = new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build();
-                notificationChannel.setSound(Uri.parse(ringtone),att);
-            }
-            notificationChannel.enableLights(true);
-            notificationChannel.setLightColor(Color.BLUE);
-
-            // Adds NotificationChannel to system. Attempting to create an existing notification
-            // channel with its original values performs no operation, so it's safe to perform the
-            // below sequence.
-            NotificationManager notificationManager =
-                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(notificationChannel);
-
-            return channelId;
-        } else {
-            // Returns null for pre-O (26) devices.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return null;
         }
+        NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID,
+                context.getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
+        notificationChannel.setDescription(context.getString(R.string.notification_channel_description));
+        notificationChannel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+        notificationChannel.enableLights(true);
+        notificationChannel.setLightColor(Color.BLUE);
+        context.getSystemService(NotificationManager.class).createNotificationChannel(notificationChannel);
+        return CHANNEL_ID;
     }
 
 }

@@ -42,6 +42,8 @@ public final class Strings {
 	
 	public static final String SETTINGS_NOTIFICATIONSVIBRATE = "notifications.vibrate";
 	
+	public static final String SETTINGS_NOTIFICATIONSCHANNEL = "notifications.channel";
+	
 	public static final String SETTINGS_PRIORITIZE = "contentpresentation.prioritize";
 	
 	public static final String SETTINGS_SHOWTABS = "tabs.show";

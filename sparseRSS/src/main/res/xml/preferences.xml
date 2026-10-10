@@ -91,6 +91,11 @@
             android:title="@string/settings_notificationsringtone"
             android:key="notifications.ringtone"
             android:dependency="notifications.enabled" />
+        <Preference
+            android:summary="@string/settings_notificationschannel_description"
+            android:title="@string/settings_notificationschannel"
+            android:key="notifications.channel"
+            android:dependency="notifications.enabled" />
         <CheckBoxPreference
             android:summary="@string/settings_notificationsvibrate_description"
             android:title="@string/settings_notificationsvibrate"

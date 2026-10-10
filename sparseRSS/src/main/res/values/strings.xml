@@ -111,6 +111,10 @@
     <string name="settings_notificationsenabled_description">Controls the appearance of notifications in case of new feed content</string>
     <string name="settings_notificationsringtone">Ringtone</string>
     <string name="settings_notificationsringtone_description">Select a ringtone that will be played on new feed content</string>
+    <string name="settings_notificationschannel">Sound and vibration</string>
+    <string name="settings_notificationschannel_description">Change them in the Android notification settings</string>
+    <string name="notification_channel_name">New entries</string>
+    <string name="notification_channel_description">Lets you know when feeds have new entries</string>
     <string name="settings_notificationsvibrate">Vibrate</string>
     <string name="settings_notificationsvibrate_description">Controls if there will be vibration on new feed content</string>
     <string name="settings_category_contentpresentation">Content presentation</string>
