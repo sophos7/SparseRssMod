@@ -209,12 +209,14 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 	/** filled in createManagedCursor */
 	private static String mStrSortOrder="";
 
+	private static final String[] ID_PROJECTION = {FeedData.EntryColumns._ID};
+
 	/**
 	 * @param uri Uri durchreichen, wird erst später in mUri gesetzt!
 	 */
 	public static void ermittleAlleIDs(Uri uri){
 		mListeIdsAsString.clear();
-		Cursor cursor = mActivity.getContentResolver().query(uri, null, mSelectionFilter, null, mStrSortOrder);
+		Cursor cursor = mActivity.getContentResolver().query(uri, ID_PROJECTION, mSelectionFilter, null, mStrSortOrder);
 		cursor.moveToFirst();
 		while (cursor.isAfterLast() == false) {
 			final String id = cursor.getString(0);

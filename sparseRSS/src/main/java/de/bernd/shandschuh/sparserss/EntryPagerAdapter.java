@@ -993,7 +993,7 @@ public class EntryPagerAdapter extends PagerAdapter {
         // cursor = mContext.getContentResolver().query(mParentUri, null,
         // EntriesListAdapter.READDATEISNULL, null, sortOrder);
         // }
-        cursor = mContext.getContentResolver().query(mParentUri, null, mSelectionFilter, null, sortOrder);
+        cursor = mContext.getContentResolver().query(mParentUri, new String[] {FeedData.EntryColumns._ID}, mSelectionFilter, null, sortOrder);
 
         cursor.moveToFirst();
         while (cursor.isAfterLast() == false) {
