@@ -20,6 +20,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.os.Build;
 import androidx.preference.PreferenceManager;
 import android.provider.BaseColumns;
@@ -55,6 +56,8 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 
@@ -67,6 +70,7 @@ import de.bernd.shandschuh.sparserss.Util;
 import de.bernd.shandschuh.sparserss.handler.RSSHandler;
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.FeedDataContentProvider;
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
 import de.bernd.shandschuh.sparserss.util.HtmlUtils;
 import de.bernd.shandschuh.sparserss.widget.SparseRSSAppWidgetProvider;
 import de.jetwick.snacktory.HtmlFetcher;
@@ -179,7 +183,14 @@ public class RssJobService extends JobService {
             String feedid=params.getExtras().getString(Strings.FEEDID);
             Boolean boOverreideWifiOnly=preferences.getBoolean(Strings.SETTINGS_OVERRIDEWIFIONLY, false);
 
+            long startedAt = SystemClock.elapsedRealtime();
             int newCount = RssJobService.refreshFeedsStatic(this, feedid, onWifi, boOverreideWifiOnly);
+            Map<String, Object> refreshInfo = new HashMap<>();
+            refreshInfo.put("new_entries", newCount);
+            refreshInfo.put("duration_ms", SystemClock.elapsedRealtime() - startedAt);
+            refreshInfo.put("scope", feedid == null ? "all" : "single");
+            refreshInfo.put("on_wifi", onWifi);
+            Diagnostics.action("feed_refresh", refreshInfo);
             // new, not unread
 
             if (newCount > 0) {
@@ -342,9 +353,9 @@ public class RssJobService extends JobService {
                     }
                     Request request = builder.build();
 
-                    OkHttpClient client = new OkHttpClient().newBuilder()
+                    OkHttpClient client = Diagnostics.instrument(new OkHttpClient().newBuilder()
                             .connectTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
+                            .readTimeout(30, TimeUnit.SECONDS))
                             .build();
                     Response response = client.newCall(request).execute();
 
@@ -656,6 +667,7 @@ public class RssJobService extends JobService {
             } catch (Throwable e) {
                 Log.i(TAG, "catch " + e);
                 if (!handler.isDone() && !handler.isCancelled()) {
+                    Diagnostics.error("feed_refresh_failed", e);
                     ContentValues values = new ContentValues();
                     values.put(FeedData.FeedColumns.FETCHMODE, 0); // resets the fetchmode to determine it again later
                     values.put(FeedData.FeedColumns.ERROR, e.getMessage());

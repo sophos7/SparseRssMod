@@ -15,6 +15,9 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
+
+
 public class SparseRssApplication extends Application {
 
 	@Override
@@ -23,6 +26,7 @@ public class SparseRssApplication extends Application {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
 			registerActivityLifecycleCallbacks(new EdgeToEdgeInsets());
 		}
+		Diagnostics.apply(this);
 	}
 
 	/** Android 15+ draws apps edge-to-edge, so keep every screen's content clear of the system bars. */

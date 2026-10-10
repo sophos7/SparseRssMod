@@ -145,4 +145,17 @@
                 android:entryValues="@array/settings_proxytypes"
                 android:dependency="proxy.enabled"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_category_diagnostics">
+        <CheckBoxPreference
+            android:key="diagnostics.enabled"
+            android:title="@string/settings_diagnostics_enabled"
+            android:summary="@string/settings_diagnostics_enabled_description"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="diagnostics.mask"
+            android:title="@string/settings_diagnostics_mask"
+            android:summary="@string/settings_diagnostics_mask_description"
+            android:defaultValue="true"
+            android:dependency="diagnostics.enabled" />
+    </PreferenceCategory>
 </PreferenceScreen>

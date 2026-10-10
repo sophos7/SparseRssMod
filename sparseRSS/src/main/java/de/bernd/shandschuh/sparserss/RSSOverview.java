@@ -82,6 +82,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.OPML;
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
 import de.bernd.shandschuh.sparserss.util.SettingsBackup;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -563,6 +564,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 if (uri != null) {
                     try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
                         OPML.importFromStream(inputStream, this);
+                        Diagnostics.action("opml_import");
                     } catch (Exception e) {
                         createErrorDialog(R.string.error_feedimport).show();
                     }
@@ -574,6 +576,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 if (uri != null) {
                     try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
                         OPML.exportToStream(outputStream, this);
+                        Diagnostics.action("opml_export");
                         Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
                     } catch (Exception e) {
                         createErrorDialog(R.string.error_feedexport).show();
@@ -586,6 +589,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 if (uri != null) {
                     try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
                         int count = SettingsBackup.importFrom(this, inputStream);
+                        Diagnostics.action("settings_import");
                         Util.applyRefreshSettings(this);
                         Util.msgBox(this, getString(R.string.message_settingsimported, count));
                         recreate();
@@ -600,6 +604,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 if (uri != null) {
                     try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
                         SettingsBackup.export(this, outputStream);
+                        Diagnostics.action("settings_export");
                         Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
                     } catch (Exception e) {
                         createErrorDialog(R.string.error_settingsexport).show();

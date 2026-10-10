@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.FeedDataContentProvider;
 import de.bernd.shandschuh.sparserss.util.BackgroundTask;
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
 import de.bernd.shandschuh.sparserss.util.HtmlUtils;
 import de.jetwick.snacktory.HtmlFetcher;
 import de.jetwick.snacktory.JResult;
@@ -569,9 +570,9 @@ public class EntryPagerAdapter extends PagerAdapter {
                 }
                 Request request = builder.build();
 
-                OkHttpClient client = new OkHttpClient().newBuilder()
+                OkHttpClient client = Diagnostics.instrument(new OkHttpClient().newBuilder()
                         .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS))
                         .build();
                 Response response = client.newCall(request).execute();
 
@@ -604,6 +605,7 @@ public class EntryPagerAdapter extends PagerAdapter {
             } catch (Exception e) {
 
                 e.printStackTrace();
+                Diagnostics.error("fulltext_fetch_failed", e);
             }
             return null;
         }

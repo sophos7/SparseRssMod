@@ -5,10 +5,12 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:9.4.1'
+        classpath 'com.datadoghq:dd-sdk-android-gradle-plugin:1.31.0'
     }
 }
 
 apply plugin: 'com.android.application'
+apply plugin: 'com.datadoghq.dd-sdk-android-gradle-plugin'
 
 repositories {
     google()
@@ -39,6 +41,12 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20250517'
+
+    def datadog_version = '3.15.0'
+    implementation "com.datadoghq:dd-sdk-android-rum:$datadog_version"
+    implementation "com.datadoghq:dd-sdk-android-okhttp:$datadog_version"
+    implementation "com.datadoghq:dd-sdk-android-session-replay:$datadog_version"
+    implementation "com.datadoghq:dd-sdk-android-session-replay-material:$datadog_version"
 
 }
 

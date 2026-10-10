@@ -60,6 +60,11 @@
     <string name="error_settingsimport">The selected file is not a valid settings backup.</string>
     <string name="error_settingsexport">The settings export has failed.</string>
     <string name="message_settingsimported">Imported %d settings.</string>
+    <string name="settings_category_diagnostics">Diagnostics</string>
+    <string name="settings_diagnostics_enabled">Send usage and crash data</string>
+    <string name="settings_diagnostics_enabled_description">Shares usage, crash and session replay data with the developer, including the pages you open. Off by default.</string>
+    <string name="settings_diagnostics_mask">Mask session replay</string>
+    <string name="settings_diagnostics_mask_description">Hide article text, images and inputs in session replays. Turn off to record the screen as shown.</string>
     <string name="menu_about">About</string>
     <string name="menu_enablefeedsort">Enable feed sort</string>
     <string name="menu_disablefeedsort">Disable feed sort</string>

@@ -29,6 +29,8 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
+
 public class ApplicationPreferencesActivity extends AppCompatActivity {
 
 	@Override
@@ -46,6 +48,7 @@ public class ApplicationPreferencesActivity extends AppCompatActivity {
 	protected void onPause() {
 		super.onPause();
 		Util.applyRefreshSettings(this);
+		Diagnostics.apply(this);
 	}
 
 }
