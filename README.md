@@ -42,7 +42,7 @@ Translators
 Code-Contributors
  - Joel Low
 
-The file "[LICENSE](../LICENSE)" contains the license information for the program.
+The file "[LICENSE](LICENSE)" contains the license information for the program.
 
 Icons and artwork are distributed under the CC-BY 3.0 license.
 

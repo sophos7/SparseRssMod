@@ -108,7 +108,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
     private static final int CONTEXTMENU_RESETUPDATEDATE_ID = 10;
 
-    private static final Uri CANGELOG_URI = Uri.parse("https://github.com/sophos7/SparseRssMod/blob/main/SparseRss/doc/changelog.md");
+    private static final Uri CANGELOG_URI = Uri.parse("https://github.com/sophos7/SparseRssMod/blob/main/doc/changelog.md");
 
     boolean feedSort;
 
