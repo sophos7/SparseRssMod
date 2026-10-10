@@ -40,6 +40,7 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
@@ -161,6 +162,9 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
         listview.setOnCreateContextMenuListener(new OnCreateContextMenuListener() {
             public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
+                if (feedSort) {
+                    return;
+                }
                 menu.setHeaderTitle(((TextView) ((AdapterView.AdapterContextMenuInfo) menuInfo).targetView
                         .findViewById(android.R.id.text1)).getText());
                 menu.add(0, CONTEXTMENU_REFRESH_ID, Menu.NONE, R.string.contextmenu_refresh);
@@ -178,86 +182,126 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
             private ImageView dragedView;
 
-            private WindowManager windowManager = RSSOverview.this.getWindowManager();
+            private final WindowManager windowManager = RSSOverview.this.getWindowManager();
 
             private LayoutParams layoutParams;
 
-            private int minY = 25; // is the header size --> needs to be changed
+            private void removeDragGhost() {
+                if (dragedView != null) {
+                    try {
+                        windowManager.removeView(dragedView);
+                    } catch (Exception ignored) {
+                    }
+                    dragedView = null;
+                }
+            }
+
+            private int dragOverlayMinY() {
+                Toolbar toolbar = findViewById(R.id.toolbar);
+                if (toolbar != null) {
+                    int[] loc = new int[2];
+                    toolbar.getLocationOnScreen(loc);
+                    return loc[1] + toolbar.getHeight();
+                }
+                return 0;
+            }
+
+            private boolean isTouchOnSortHandle(View sortView, MotionEvent event) {
+                int[] sortLoc = new int[2];
+                sortView.getLocationOnScreen(sortLoc);
+                float rawX = event.getRawX();
+                float rawY = event.getRawY();
+                return rawX >= sortLoc[0] && rawX <= sortLoc[0] + sortView.getWidth()
+                        && rawY >= sortLoc[1] && rawY <= sortLoc[1] + sortView.getHeight();
+            }
 
             public boolean onTouch(View v, MotionEvent event) {
-                if (feedSort) {
-                    int action = event.getAction();
+                if (!feedSort) {
+                    return false;
+                }
+                int action = event.getAction();
+                int minY = dragOverlayMinY();
 
-                    switch (action) {
-                        case MotionEvent.ACTION_DOWN:
-                        case MotionEvent.ACTION_MOVE: {
-                            // this is the drag action
-                            if (dragedItem == -1) {
-                                dragedItem = listview.pointToPosition((int) event.getX(), (int) event.getY());
-                                if (dragedItem > -1) {
-                                    dragedView = new ImageView(listview.getContext());
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_MOVE: {
+                        if (dragedItem == -1) {
+                            dragedItem = listview.pointToPosition((int) event.getX(), (int) event.getY());
+                            if (dragedItem > -1) {
+                                View item = listview.getChildAt(dragedItem - listview.getFirstVisiblePosition());
+                                if (item != null) {
+                                    View sortView = item.findViewById(R.id.sortitem);
+                                    if (sortView != null && sortView.getVisibility() == View.VISIBLE
+                                            && isTouchOnSortHandle(sortView, event)) {
+                                        dragedView = new ImageView(listview.getContext());
+                                        Bitmap itemBitmap = Bitmap.createBitmap(item.getWidth(), item.getHeight(),
+                                                Bitmap.Config.ARGB_8888);
+                                        item.draw(new Canvas(itemBitmap));
+                                        dragedView.setImageBitmap(itemBitmap);
 
-                                    View item = listview.getChildAt(dragedItem - listview.getFirstVisiblePosition());
-
-                                    if (item != null) {
-                                        View sortView = item.findViewById(R.id.sortitem);
-
-                                        if (sortView.getLeft() <= event.getX()) {
-                                            Bitmap itemBitmap = Bitmap.createBitmap(item.getWidth(), item.getHeight(), Bitmap.Config.ARGB_8888);
-                                            item.draw(new Canvas(itemBitmap));
-                                            dragedView.setImageBitmap(itemBitmap);
-
-                                            layoutParams = new LayoutParams();
-                                            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-                                            layoutParams.gravity = Gravity.TOP;
-                                            layoutParams.y = (int) event.getY();
+                                        layoutParams = new LayoutParams();
+                                        layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+                                        layoutParams.token = listview.getApplicationWindowToken();
+                                        layoutParams.format = PixelFormat.TRANSLUCENT;
+                                        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                                        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+                                        layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                                        layoutParams.gravity = Gravity.TOP | Gravity.START;
+                                        layoutParams.x = 0;
+                                        layoutParams.y = (int) event.getRawY();
+                                        try {
                                             windowManager.addView(dragedView, layoutParams);
-                                        } else {
+                                        } catch (Exception e) {
+                                            dragedView = null;
                                             dragedItem = -1;
-                                            return false; // do not comsume
+                                            return false;
                                         }
-
                                     } else {
                                         dragedItem = -1;
+                                        return false;
                                     }
+                                } else {
+                                    dragedItem = -1;
                                 }
-                            } else if (dragedView != null) {
-                                layoutParams.y = Math.max(minY,
-                                        Math.max(0, Math.min((int) event.getY(), listview.getHeight() - minY)));
-                                windowManager.updateViewLayout(dragedView, layoutParams);
                             }
-                            break;
+                        } else if (dragedView != null && layoutParams != null) {
+                            int[] listLoc = new int[2];
+                            listview.getLocationOnScreen(listLoc);
+                            int maxY = listLoc[1] + listview.getHeight();
+                            layoutParams.y = Math.max(minY,
+                                    Math.min((int) event.getRawY(), maxY));
+                            windowManager.updateViewLayout(dragedView, layoutParams);
                         }
-                        case MotionEvent.ACTION_UP:
-                        case MotionEvent.ACTION_CANCEL: {
-                            // this is the drop action
-                            if (dragedItem > -1) {
-                                windowManager.removeView(dragedView);
-
+                        break;
+                    }
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL: {
+                        if (dragedItem > -1) {
+                            try {
                                 int newPosition = listview.pointToPosition((int) event.getX(), (int) event.getY());
-
                                 if (newPosition == -1) {
                                     newPosition = listview.getCount() - 1;
                                 }
                                 if (newPosition != dragedItem) {
                                     ContentValues values = new ContentValues();
-
-                                    values.put(FeedData.FeedColumns.PRIORITY, newPosition);
+                                    values.put(FeedData.FeedColumns.PRIORITY,
+                                            listAdapter.getPriorityAt(newPosition));
                                     getContentResolver().update(
-                                            FeedData.FeedColumns.CONTENT_URI(listview.getItemIdAtPosition(dragedItem)),
+                                            FeedData.FeedColumns.CONTENT_URI(
+                                                    listview.getItemIdAtPosition(dragedItem)),
                                             values, null, null);
                                 }
+                            } finally {
+                                removeDragGhost();
                                 dragedItem = -1;
-                                return true;
-                            } else {
-                                return false;
                             }
+                            return true;
                         }
+                        removeDragGhost();
+                        return false;
                     }
-                    return true;
-                } else {
-                    return false;
                 }
+                return true;
             }
         });
 
@@ -265,7 +309,9 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                setFeedSortEnabled(false);
+                if (feedSort) {
+                    return;
+                }
 
                 if (Util.getTestListPrefs(getApplicationContext())) {
                     Intent intent = new Intent(getApplicationContext(), EntriesListActivity.class);
@@ -293,6 +339,8 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             public void handleOnBackPressed() {
                 if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
                     mDrawerLayout.closeDrawer(mDrawerList);
+                } else if (feedSort) {
+                    setFeedSortEnabled(false);
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
@@ -386,9 +434,19 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
 
-        setFeedSortEnabled(false);
-
         final int selectedId = item.getItemId();
+        if (selectedId == R.id.menu_enablefeedsort) {
+            setFeedSortEnabled(true);
+            return true;
+        }
+        if (selectedId == R.id.menu_disablefeedsort) {
+            setFeedSortEnabled(false);
+            return true;
+        }
+        if (feedSort) {
+            setFeedSortEnabled(false);
+        }
+
         if (selectedId == android.R.id.home) {
             mDrawerLayout.openDrawer(GravityCompat.START);
             return true;
@@ -543,8 +601,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             importSettingsLauncher.launch(new String[]{"*/*"});
         } else if (selectedId == R.id.menu_export_settings) {
             exportSettingsLauncher.launch("sparse_rss_settings_" + System.currentTimeMillis() + ".json");
-        } else if (selectedId == R.id.menu_enablefeedsort) {
-            setFeedSortEnabled(true);
         } else if (selectedId == R.id.menu_deleteread) {
             FeedData.deletePicturesOfFeedAsync(this, FeedData.EntryColumns.CONTENT_URI, Strings.READDATE_GREATERZERO);
             getContentResolver().delete(FeedData.EntryColumns.CONTENT_URI, Strings.READDATE_GREATERZERO, null);
@@ -553,8 +609,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             listAdapter.notifyDataSetChanged();
         } else if (selectedId == R.id.menu_deleteallentries) {
             showDeleteAllEntriesQuestion(this, FeedData.EntryColumns.CONTENT_URI);
-        } else if (selectedId == R.id.menu_disablefeedsort) {
-            // do nothing as the feed sort gets disabled anyway
         } else if (selectedId == R.id.menu_log) {
             Intent intent = new Intent(this, SendLogActivity.class);
             startActivity(intent);
@@ -751,6 +805,11 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         if (enabled != feedSort) {
             listAdapter.setFeedSortEnabled(enabled);
             feedSort = enabled;
+            invalidateOptionsMenu();
+        }
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setSubtitle(enabled ? getString(R.string.menu_disablefeedsort) : null);
         }
     }
 
