@@ -108,7 +108,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
 
     private static final int CONTEXTMENU_RESETUPDATEDATE_ID = 10;
 
-    private static final Uri CANGELOG_URI = Uri.parse("https://github.com/AndroidMakesFun/SparseRssMod/blob/master/SparseRss/README.md");
+    private static final Uri CANGELOG_URI = Uri.parse("https://github.com/sophos7/SparseRssMod/blob/main/SparseRss/doc/changelog.md");
 
     boolean feedSort;
 
@@ -749,7 +749,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         // selection
         StringBuilder sb = new StringBuilder();
         sb.append("Version: " + Util.getVersionNumber(this) + "\n");
-        sb.append("Playstore:\nhttps://play.google.com/store/apps/details?id=de.bernd.shandschuh.sparserss\n\n");
+        sb.append("Source:\nhttps://github.com/sophos7/SparseRssMod\n\n");
         sb.append(getString(R.string.license_intro)).append(Strings.THREENEWLINES).append(getString(R.string.license));
         textView.setText(sb);
 

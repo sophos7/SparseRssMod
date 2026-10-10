@@ -1,5 +1,12 @@
 Changelog - Sparse RSS Mod
 ==========================
+2.45
+* Updated to current Android (target API 36, edge-to-edge, predictive back)
+* Updated all libraries
+* OPML import and export use the system file picker
+* Fixed crash when changing theme then marking all as read
+* Background refresh and notification fixes
+
 2.42
 Widget and Nullpointer fixed
 

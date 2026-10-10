@@ -1,9 +1,9 @@
-Sparse Rss Mod 2013-2018
+Sparse Rss Mod 2013-2026
 ========================
-This is an android program to read RSS News. 
-Modified by android.makes.fun@gmail.com
+This is an android program to read RSS News.
+Originally by Stefan Handschuh, modified by android.makes.fun@gmail.com, now maintained by [sophos7](https://github.com/sophos7/SparseRssMod).
 
-* [Playstore](https://play.google.com/store/apps/details?id=de.bernd.shandschuh.sparserss)
+* [Source](https://github.com/sophos7/SparseRssMod)
 * [Documentation](doc/doc.md)
 * [Sample RSS Feeds](doc/feeds.md)
 * [Changelog](doc/changelog.md)
@@ -42,7 +42,7 @@ Translators
 Code-Contributors
  - Joel Low
 
-The file "LICENSE" contains the license information for the program.
+The file "[LICENSE](../LICENSE)" contains the license information for the program.
 
 Icons and artwork are distributed under the CC-BY 3.0 license.
 
