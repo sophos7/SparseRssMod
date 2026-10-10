@@ -37,7 +37,7 @@ public final class Diagnostics {
 	private static final String CLIENT_TOKEN = "pubbc68ecfadfdc661a977284b97a8a476b";
 	private static final String RUM_APPLICATION_ID = "d232b3fc-629c-4370-8820-b6937f6999b7";
 
-	private static boolean sMasked;
+	private static String sAppliedConfig;
 
 	private Diagnostics() {
 	}
@@ -52,28 +52,48 @@ public final class Diagnostics {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appContext);
 		boolean enabled = prefs.getBoolean(Strings.SETTINGS_DIAGNOSTICS_ENABLED, false);
 		boolean masked = prefs.getBoolean(Strings.SETTINGS_DIAGNOSTICS_MASK, true);
+		String token = prefs.getString(Strings.SETTINGS_DIAGNOSTICS_TOKEN, "").trim();
+		String applicationId = prefs.getString(Strings.SETTINGS_DIAGNOSTICS_APPLICATION_ID, "").trim();
+		boolean custom = !token.isEmpty() && !applicationId.isEmpty();
+		if (!custom) {
+			token = CLIENT_TOKEN;
+			applicationId = RUM_APPLICATION_ID;
+		}
+		DatadogSite site = custom
+				? parseSite(prefs.getString(Strings.SETTINGS_DIAGNOSTICS_SITE, null))
+				: DatadogSite.US1;
+		String config = masked + "|" + token + "|" + applicationId + "|" + site.name();
 
 		if (Datadog.isInitialized()) {
-			if (enabled && masked == sMasked) {
+			if (enabled && config.equals(sAppliedConfig)) {
 				return;
 			}
 			Datadog.stopInstance();
 		}
 		if (enabled) {
-			start(appContext, masked);
+			start(appContext, masked, token, applicationId, site);
+			sAppliedConfig = config;
 		}
 	}
 
-	private static void start(Context context, boolean masked) {
+	private static DatadogSite parseSite(String name) {
+		try {
+			return DatadogSite.valueOf(name);
+		} catch (IllegalArgumentException | NullPointerException e) {
+			return DatadogSite.US1;
+		}
+	}
+
+	private static void start(Context context, boolean masked, String token, String applicationId, DatadogSite site) {
 		boolean debuggable = (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
 		String variant = debuggable ? "debug" : "release";
 
-		Configuration config = new Configuration.Builder(CLIENT_TOKEN, variant, variant)
-				.useSite(DatadogSite.US1)
+		Configuration config = new Configuration.Builder(token, variant, variant)
+				.useSite(site)
 				.build();
 		Datadog.initialize(context, config, TrackingConsent.GRANTED);
 
-		Rum.enable(new RumConfiguration.Builder(RUM_APPLICATION_ID)
+		Rum.enable(new RumConfiguration.Builder(applicationId)
 				.useViewTrackingStrategy(new ActivityViewTrackingStrategy(true))
 				.trackUserInteractions()
 				.trackLongTasks()
@@ -86,7 +106,6 @@ public final class Diagnostics {
 				.setTouchPrivacy(masked ? TouchPrivacy.HIDE : TouchPrivacy.SHOW)
 				.addExtensionSupport(new MaterialExtensionSupport())
 				.build());
-		sMasked = masked;
 	}
 
 	/** Adds network tracking to the client when reporting is on. */

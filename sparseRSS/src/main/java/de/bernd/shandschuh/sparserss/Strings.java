@@ -86,6 +86,12 @@ public final class Strings {
 	
 	public static final String SETTINGS_DIAGNOSTICS_MASK = "diagnostics.mask";
 	
+	public static final String SETTINGS_DIAGNOSTICS_TOKEN = "diagnostics.token";
+	
+	public static final String SETTINGS_DIAGNOSTICS_APPLICATION_ID = "diagnostics.application_id";
+	
+	public static final String SETTINGS_DIAGNOSTICS_SITE = "diagnostics.site";
+	
 	public static final String ACTION_REFRESHFEEDS = "de.bernd.shandschuh.sparserss.REFRESH";
 	
 	public static final String ACTION_RESTART = "de.bernd.shandschuh.sparserss.RESTART";

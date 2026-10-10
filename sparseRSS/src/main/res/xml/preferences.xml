@@ -162,5 +162,23 @@
             android:summary="@string/settings_diagnostics_mask_description"
             android:defaultValue="true"
             android:dependency="diagnostics.enabled" />
+        <EditTextPreference
+            android:key="diagnostics.token"
+            android:title="@string/settings_diagnostics_token"
+            android:summary="@string/settings_diagnostics_custom_description"
+            android:singleLine="true"
+            android:dependency="diagnostics.enabled" />
+        <EditTextPreference
+            android:key="diagnostics.application_id"
+            android:title="@string/settings_diagnostics_application_id"
+            android:singleLine="true"
+            android:dependency="diagnostics.enabled" />
+        <ListPreference
+            android:key="diagnostics.site"
+            android:title="@string/settings_diagnostics_site"
+            android:entries="@array/settings_diagnostics_site_names"
+            android:entryValues="@array/settings_diagnostics_sites"
+            android:defaultValue="US1"
+            android:dependency="diagnostics.enabled" />
     </PreferenceCategory>
 </PreferenceScreen>

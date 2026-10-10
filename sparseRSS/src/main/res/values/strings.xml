@@ -64,6 +64,10 @@
     <string name="settings_diagnostics_enabled">Send usage and crash data</string>
     <string name="settings_diagnostics_enabled_description">Shares usage, crash and session replay data with the developer, including the pages you open. Off by default.</string>
     <string name="settings_diagnostics_mask">Mask session replay</string>
+    <string name="settings_diagnostics_token">Datadog client token</string>
+    <string name="settings_diagnostics_application_id">Datadog RUM application ID</string>
+    <string name="settings_diagnostics_site">Datadog site</string>
+    <string name="settings_diagnostics_custom_description">Optional. Set both a token and an application ID to send the data to your own Datadog account instead of the developer\'s.</string>
     <string name="settings_diagnostics_mask_description">Hide article text, images and inputs in session replays. Turn off to record the screen as shown.</string>
     <string name="menu_about">About</string>
     <string name="menu_enablefeedsort">Enable feed sort</string>

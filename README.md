@@ -19,6 +19,8 @@ Privacy
 The app sends nothing anywhere by default. Settings > Diagnostics > Send usage and crash data turns on
 [Datadog](https://www.datadoghq.com) RUM, crash reporting and session replay. Session replay masks all text, images and
 touches unless you turn off "Mask session replay".
+To send the data to your own Datadog account instead, enter a client token, RUM application ID and site in the same
+section. Those credentials are not part of the settings export.
 
 Building
 --------
