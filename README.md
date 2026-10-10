@@ -9,6 +9,22 @@ Originally by Stefan Handschuh, modified by android.makes.fun@gmail.com, now mai
 * [Changelog](doc/changelog.md)
 
 
+Backup
+------
+* Menu > Export to OPML / Import from OPML: your feeds
+* Menu > Export settings / Import settings: your options (JSON). Starred and read entries are not included.
+
+Privacy
+-------
+The app sends nothing anywhere by default. Settings > Diagnostics > Send usage and crash data turns on
+[Datadog](https://www.datadoghq.com) RUM, crash reporting and session replay. Session replay masks all text, images and
+touches unless you turn off "Mask session replay".
+
+Building
+--------
+`./gradlew :sparseRSS:assembleDebug`. Release builds are minified with R8; add `-PlocalRelease` to sign with the debug key.
+If `DD_API_KEY` is set, the R8 mapping file is uploaded to Datadog so crash reports are readable.
+
 Thanks
 ------
 * The original developer Stefan Handschuh 
