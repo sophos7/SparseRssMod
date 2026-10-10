@@ -322,6 +322,18 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        listAdapter.reload();
+    }
+
+    @Override
+    protected void onDestroy() {
+        listAdapter.changeCursor(null);
+        super.onDestroy();
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
         // Menues in die Toolbar, SHOW_AS_ACTION_ALWAYS zieht nur hier

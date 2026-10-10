@@ -70,6 +70,8 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 	
 	private int iconPosition;
 	
+	private final Activity activity;
+	
 	private Handler handler;
 	
 	private SimpleTask updateTask;
@@ -94,7 +96,8 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 
 
 	public RSSOverviewListAdapter(Activity activity) {
-		super(activity, R.layout.feedlistitem, activity.managedQuery(FeedData.FeedColumns.CONTENT_URI, null, null, null, null));
+		super(activity, R.layout.feedlistitem, queryFeeds(activity), FLAG_REGISTER_CONTENT_OBSERVER);
+		this.activity = activity;
 		nameColumnPosition = getCursor().getColumnIndex(FeedData.FeedColumns.NAME);
 		lastUpdateColumn = getCursor().getColumnIndex(FeedData.FeedColumns.LASTUPDATE);
 		idPosition = getCursor().getColumnIndex(FeedData.FeedColumns._ID);
@@ -109,7 +112,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 		updateTask = new SimpleTask() {
 			@Override
 			public void runControlled() {
-				RSSOverviewListAdapter.super.onContentChanged();
+				reload();
 				cancel(); // cancel the task such that it does not run more than once without explicit intention
 			}
 			
@@ -232,7 +235,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 		 * to take stress away from the UI and avoid not needed updates
 		 */
 		if (!updateTask.isPosted()) {
-			super.onContentChanged();
+			reload();
 			updateTask.post(2); // we post 2 tasks
 			handler.postDelayed(updateTask, 1500); // waits one second until the task gets unposted
 			updateTask.cancel(); // put the canceled task in the queue to enable it again optionally
@@ -243,6 +246,15 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 				updateTask.enable();
 			}
 		}
+	}
+
+	private static Cursor queryFeeds(Context context) {
+		return context.getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, null, null, null, null);
+	}
+
+	/** Runs the query again and swaps in the new cursor. */
+	public void reload() {
+		changeCursor(queryFeeds(activity));
 	}
 
 	public void setFeedSortEnabled(boolean enabled) {

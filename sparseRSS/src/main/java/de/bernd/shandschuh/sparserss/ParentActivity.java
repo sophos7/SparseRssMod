@@ -452,7 +452,7 @@ public class ParentActivity extends AppCompatActivity {
                     FeedData.deletePicturesOfFeed(ParentActivity.this, uri, selection);
                     runOnUiThread(new Runnable() {
                         public void run() {
-                            mAdapter.getCursor().requery();
+                            mAdapter.reload();
                         }
                     });
                 }
@@ -470,7 +470,7 @@ public class ParentActivity extends AppCompatActivity {
                             getContentResolver().delete(uri, Strings.DB_EXCUDEFAVORITE, null);
                             runOnUiThread(new Runnable() {
                                 public void run() {
-                                    mAdapter.getCursor().requery();
+                                    mAdapter.reload();
                                 }
                             });
                         }
@@ -496,7 +496,7 @@ public class ParentActivity extends AppCompatActivity {
 
             getContentResolver().delete(ContentUris.withAppendedId(uri, id), null, null);
             FeedData.deletePicturesOfEntry(Long.toString(id));
-            mAdapter.getCursor().requery(); // we have no other choice
+            mAdapter.reload(); // we have no other choice
         } else if (selectedId == CONTEXTMENU_COPYURL) {
             String url = ((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).targetView.getTag().toString();
             ((ClipboardManager) getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText(url, url));
@@ -609,6 +609,12 @@ public class ParentActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        mAdapter.reload();
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
         //System.out.println("onStop");
@@ -619,5 +625,6 @@ public class ParentActivity extends AppCompatActivity {
         super.onDestroy();
         //System.out.println("onDestroy");
         clickMarkAsReadUpHereForIds(null);
+        mAdapter.changeCursor(null);
     }
 }

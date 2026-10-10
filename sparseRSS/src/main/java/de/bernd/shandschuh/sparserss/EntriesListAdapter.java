@@ -101,6 +101,8 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 
 	protected boolean showRead;
 	
+	private boolean mAutoreload;
+	
 	protected static Activity mActivity;
 	
 	protected Uri uri;
@@ -141,7 +143,8 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 	 * @param bResetSearchFilter true im cons f?r createManagedCursor()
 	 */
 	public EntriesListAdapter(Activity context, Uri uri, boolean showFeedInfo, boolean autoreload, int layout, int iFeedFilter, boolean bResetSearchFilter) {
-		super(context, layout, createManagedCursor(context, uri, true, iFeedFilter, bResetSearchFilter), autoreload);
+		super(context, layout, createCursor(context, uri, true, iFeedFilter, bResetSearchFilter), FLAG_REGISTER_CONTENT_OBSERVER);
+		mAutoreload = autoreload;
 
 		today = Util.startOfToday();
 
@@ -387,15 +390,25 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 			mSearchFilter=EntryColumns.TITLE + " REGEXP '(?i).*" + filter + ".*'";
 		}
 //		notifyDataSetChanged();
-		mActivity.stopManagingCursor(getCursor());
-		changeCursor(createManagedCursor(mActivity, uri, showRead, mFeedFilter, false));
+		reload();
+	}
+
+	/** Runs the query again and swaps in the new cursor. */
+	public void reload() {
+		changeCursor(createCursor(mActivity, uri, showRead, mFeedFilter, false));
+	}
+
+	@Override
+	protected void onContentChanged() {
+		if (mAutoreload) {
+			reload();
+		}
 	}
 	
 	public void showRead(boolean showRead) {
 		if (showRead != this.showRead) {
-			mActivity.stopManagingCursor(getCursor());
-			changeCursor(createManagedCursor(mActivity, uri, showRead, mFeedFilter, false));
 			this.showRead = showRead;
+			reload();
 		}
 	}
 	
@@ -412,7 +425,7 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 		return mSelectionFilter;
 	}
 	
-	private static Cursor createManagedCursor(Activity context, Uri uri, boolean showRead, int iFeedFilter, boolean bResetSearchFilter) {
+	private static Cursor createCursor(Activity context, Uri uri, boolean showRead, int iFeedFilter, boolean bResetSearchFilter) {
 		mActivity = context;
 		mStrSortOrder=new StringBuilder(PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_PRIORITIZE, false) ? SQLREAD : Strings.EMPTY).append(FeedData.EntryColumns.DATE).append(Strings.DB_DESC).toString();
 		mFeedFilter=iFeedFilter;
@@ -444,7 +457,7 @@ public class EntriesListAdapter extends ResourceCursorAdapter {
 
 		ermittleAlleIDs(uri);
 
-		return context.managedQuery(uri, null, selection, null,mStrSortOrder);
+		return context.getContentResolver().query(uri, null, selection, null, mStrSortOrder);
 	}
 	
 	public static String[]TOPFEED_PROJECTION={"_ID", FeedData.FeedColumns.TOPFEED, FeedData.FeedColumns.SYNC};
