@@ -13,6 +13,7 @@ alwaysApply: true
 - Package and `applicationId` is `de.bernd.shandschuh.sparserss`. Do not change it casually: it is what existing installs, the content provider and the custom permissions are keyed on.
 - Targeting API 35+ forces edge-to-edge: `SparseRssApplication` pads each activity's content by the system bar insets. Handle back with `OnBackPressedCallback`, not `onBackPressed`.
 - Settings use `androidx.preference` fragments; OPML import/export uses the Storage Access Framework; background refresh is `RssJobService` via `JobScheduler` (rescheduled with `Util.enqueueJob`).
+- Release builds use R8 (`proguard-rules.pro`). Build with `-PlocalRelease` to sign with the debug key for local installs. With `DD_API_KEY` set, the R8 mapping uploads to Datadog automatically. Test a release APK after touching reflection, menu `android:onClick` handlers or libraries.
 - Run `:sparseRSS:lintDebug` before finishing; it must report 0 errors.
 - Make small commits, one concern each (toolchain, behavior change, feature), and verify the debug build after every Gradle or manifest change.
 - Use Android Studio for Gradle sync, emulator or device runs, Logcat and the layout editor; use Cursor for edits and refactors.

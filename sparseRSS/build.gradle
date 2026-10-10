@@ -61,8 +61,12 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (project.hasProperty('localRelease')) {
+                signingConfig signingConfigs.debug
+            }
         }
     }
 
@@ -76,6 +80,17 @@ android {
     namespace 'de.bernd.shandschuh.sparserss'
 }
 
+
+datadog {
+    site = 'US1'
+}
+
+// Upload the R8 mapping when an API key is available so crash stack traces are readable
+afterEvaluate {
+    if (System.getenv('DD_API_KEY') || System.getenv('DATADOG_API_KEY')) {
+        tasks.named('minifyReleaseWithR8') { finalizedBy tasks.named('uploadMappingRelease') }
+    }
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-Xlint:deprecation' << '-Xmaxwarns' << '1000'
