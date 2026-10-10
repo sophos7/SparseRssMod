@@ -138,6 +138,7 @@ public class WidgetConfigActivity extends AppCompatActivity {
 		}
 
 		@Override
+		@SuppressWarnings("deprecation")
 		public void onDisplayPreferenceDialog(Preference preference) {
 			if (preference instanceof ColorPickerDialogPreference) {
 				ColorPickerPreferenceDialogFragment dialog = ColorPickerPreferenceDialogFragment.newInstance(preference.getKey());
