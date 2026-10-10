@@ -37,7 +37,6 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
@@ -588,11 +587,9 @@ public class Util {
 			activity.setTheme(R.style.MyTheme_Light);
 		}else if (colorMode==1){
 			//AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-			activity.getWindow().setNavigationBarColor(ContextCompat.getColor(activity, R.color.my_black));
 			activity.setTheme(R.style.MyThemeDark);
 		}else{
 			//AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-			activity.getWindow().setNavigationBarColor(ContextCompat.getColor(activity, R.color.my_black));
 			activity.setTheme(R.style.MyThemeNight);
 		}
 	}
