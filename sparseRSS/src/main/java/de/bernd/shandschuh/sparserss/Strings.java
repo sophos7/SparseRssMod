@@ -97,6 +97,9 @@ public final class Strings {
 	public static final String ACTION_RESTART = "de.bernd.shandschuh.sparserss.RESTART";
 	
 	public static final String FEEDID = "feedid";
+
+	/** When true, scheduled refresh skips feeds with {@link FeedData.FeedColumns#NOAUTOREFRESH}. */
+	public static final String REFRESH_APPLY_AUTO_EXCLUSIONS = "refresh.applyAutoExclusions";
 	
 	public static final String DB_ISNULL = " IS NULL";
 	
