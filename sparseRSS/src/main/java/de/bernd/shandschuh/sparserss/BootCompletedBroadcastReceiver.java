@@ -56,7 +56,7 @@ public class BootCompletedBroadcastReceiver extends BroadcastReceiver {
 				// ersetzt durch folgende Zeilen:
 
 				Log.d(TAG, "Scheduling job in BootCompletedBroadcastReceiver");
-				Util.scheduleJob(context,true);
+				Util.applyRefreshSettings(context);
 
 			/**
 				ComponentName mServiceComponent = new ComponentName(context, RssJobService.class);

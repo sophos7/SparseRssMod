@@ -27,6 +27,7 @@ public class SparseRssApplication extends Application {
 			registerActivityLifecycleCallbacks(new EdgeToEdgeInsets());
 		}
 		Diagnostics.apply(this);
+		Util.ensurePeriodicRefreshScheduled(this);
 	}
 
 	/** Android 15+ draws apps edge-to-edge, so keep every screen's content clear of the system bars. */

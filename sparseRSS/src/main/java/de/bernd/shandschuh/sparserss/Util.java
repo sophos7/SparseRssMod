@@ -461,7 +461,9 @@ public class Util {
 
 	private static final String SIXTYMINUTES = "3600000";
 
-	private static final int PERIODIC_JOB_ID = 1;
+	public static final int PERIODIC_JOB_ID = 1;
+
+	private static final int IMMEDIATE_JOB_ID = 2;
 
 	/** Schedules or cancels the periodic refresh to match the stored settings. */
 	public static void applyRefreshSettings(Context context) {
@@ -472,21 +474,51 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Ensures a pending periodic refresh job exists without pushing its deadline later.
+	 * Use on app start when automatic refresh is enabled; prefer {@link #applyRefreshSettings} when the user changes settings.
+	 */
+	public static void ensurePeriodicRefreshScheduled(Context context) {
+		if (!PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
+			return;
+		}
+		JobScheduler tm = context.getSystemService(JobScheduler.class);
+		for (JobInfo job : tm.getAllPendingJobs()) {
+			if (job.getId() == PERIODIC_JOB_ID) {
+				if (schedulesPeriodicRefresh() && job.isPeriodic()) {
+					return;
+				}
+				tm.cancel(PERIODIC_JOB_ID);
+				break;
+			}
+		}
+		enqueueJob(context, true, true);
+	}
+
 	public static void scheduleJob(Context context, final boolean doShedule) {
-		enqueueJob(context, doShedule);
+		scheduleJob(context, doShedule, true);
+	}
+
+	public static void scheduleJob(Context context, final boolean doShedule, final boolean applyAutoRefreshExclusions) {
+		enqueueJob(context, doShedule, applyAutoRefreshExclusions);
 		context.sendBroadcast(new Intent(Strings.ACTION_REFRESHFEEDS).setPackage(context.getPackageName()));
 		context.sendBroadcast(new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE));
 	}
 
 	public static void enqueueJob(Context context, final boolean doShedule) {
+		enqueueJob(context, doShedule, true);
+	}
+
+	public static boolean schedulesPeriodicRefresh() {
+		return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N;
+	}
+
+	public static void enqueueJob(Context context, final boolean doShedule, final boolean applyAutoRefreshExclusions) {
 
 		// aus // "Scheduling job in BootCompletedBroadcastReceiver");
 		Log.d("Util", "Util . SCHEDULEJOB " + doShedule);
 		ComponentName mServiceComponent = new ComponentName(context, RssJobService.class);
-		int jobid=1;
-		if(!doShedule){
-            jobid=2;
-        }
+		int jobid = doShedule ? PERIODIC_JOB_ID : IMMEDIATE_JOB_ID;
 		JobInfo.Builder jobBuilder = new JobInfo.Builder(jobid, mServiceComponent);
 		//	builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);  // nur wlan
 		jobBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
@@ -501,16 +533,19 @@ public class Util {
 			Log.d(TAG, "EXP2 " + exception.toString());
 		}
 		Log.d("Util", "Util . SCHEDULEJOB " + time);
-		// jobBuilder.setPeriodic(900000);
 
-        if(doShedule){
-            jobBuilder.setMinimumLatency(time); //2 * 1000); // wait at least 2 Sek
-
-            jobBuilder.setOverrideDeadline(time*2); // 30 * 1000); // maximum delay
+        if (doShedule) {
+			if (schedulesPeriodicRefresh()) {
+				jobBuilder.setPeriodic(time);
+			} else {
+				jobBuilder.setMinimumLatency(time);
+				jobBuilder.setOverrideDeadline(time * 2);
+			}
         }
 
 		PersistableBundle extras = new PersistableBundle();
 		//extras.putString(Strings.FEEDID, id);
+		extras.putBoolean(Strings.REFRESH_APPLY_AUTO_EXCLUSIONS, applyAutoRefreshExclusions);
 		jobBuilder.setExtras(extras);
 		JobScheduler tm = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
 		tm.schedule(jobBuilder.build());
