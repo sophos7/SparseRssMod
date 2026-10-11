@@ -150,6 +150,16 @@
                 android:entryValues="@array/settings_proxytypes"
                 android:dependency="proxy.enabled"/>
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/settings_category_backup">
+        <Preference
+            android:key="settings.import"
+            android:title="@string/menu_import_settings"
+            android:summary="@string/settings_import_settings_summary" />
+        <Preference
+            android:key="settings.export"
+            android:title="@string/menu_export_settings"
+            android:summary="@string/settings_export_settings_summary" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_category_diagnostics">
         <CheckBoxPreference
             android:key="diagnostics.enabled"
@@ -180,5 +190,13 @@
             android:entryValues="@array/settings_diagnostics_sites"
             android:defaultValue="US1"
             android:dependency="diagnostics.enabled" />
+        <Preference
+            android:key="debug.view_log"
+            android:title="@string/settings_debug_view_log"
+            android:summary="@string/settings_debug_view_log_summary" />
+        <Preference
+            android:key="debug.scheduled_jobs"
+            android:title="@string/settings_debug_scheduled_jobs"
+            android:summary="@string/settings_debug_scheduled_jobs_summary" />
     </PreferenceCategory>
 </PreferenceScreen>

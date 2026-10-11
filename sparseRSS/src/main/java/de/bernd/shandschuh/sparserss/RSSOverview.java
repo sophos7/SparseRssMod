@@ -84,7 +84,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import de.bernd.shandschuh.sparserss.provider.FeedData;
 import de.bernd.shandschuh.sparserss.provider.OPML;
 import de.bernd.shandschuh.sparserss.util.Diagnostics;
-import de.bernd.shandschuh.sparserss.util.SettingsBackup;
 import java.io.InputStream;
 import java.io.OutputStream;
 import de.bernd.shandschuh.sparserss.service.RssJobService;
@@ -329,9 +328,9 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         });
 
         if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHONPENENABLED, false)) {
-            Util.scheduleJob(this, false);
-        } else if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
-            Util.scheduleJob(this, true);
+            Util.scheduleJob(this, false, true);
+        } else {
+            Util.ensurePeriodicRefreshScheduled(this);
         }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -571,16 +570,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                     values, null, null);
         } else if (selectedId == R.id.menu_settings) {
             startActivity(new Intent(this, ApplicationPreferencesActivity.class));
-        } else if (selectedId == R.id.menu_load_last) {
-            String entryid = Util.getLastEntryId(this);
-            if (entryid == null) {
-                Util.toastMessage(this, "No Last Entry");
-                return true;
-            }
-            int feedId = Util.getFeedIdZuEntryId(this, entryid);
-            Uri contenUri = FeedData.EntryColumns.FULL_CONTENT_URI("" + feedId, entryid);
-            //mit content://de.bernd.shandschuh.sparserss.provider.FeedData/feeds/0/entries/134522
-            startActivity(new Intent(Intent.ACTION_VIEW, contenUri));
         } else if (selectedId == R.id.menu_allread) {
             new Thread() {
                 public void run() {
@@ -597,10 +586,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             importOpmlLauncher.launch(new String[]{"*/*"});
         } else if (selectedId == R.id.menu_export) {
             exportOpmlLauncher.launch("sparse_rss_" + System.currentTimeMillis() + ".opml");
-        } else if (selectedId == R.id.menu_import_settings) {
-            importSettingsLauncher.launch(new String[]{"*/*"});
-        } else if (selectedId == R.id.menu_export_settings) {
-            exportSettingsLauncher.launch("sparse_rss_settings_" + System.currentTimeMillis() + ".json");
         } else if (selectedId == R.id.menu_deleteread) {
             FeedData.deletePicturesOfFeedAsync(this, FeedData.EntryColumns.CONTENT_URI, Strings.READDATE_GREATERZERO);
             getContentResolver().delete(FeedData.EntryColumns.CONTENT_URI, Strings.READDATE_GREATERZERO, null);
@@ -609,9 +594,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
             listAdapter.notifyDataSetChanged();
         } else if (selectedId == R.id.menu_deleteallentries) {
             showDeleteAllEntriesQuestion(this, FeedData.EntryColumns.CONTENT_URI);
-        } else if (selectedId == R.id.menu_log) {
-            Intent intent = new Intent(this, SendLogActivity.class);
-            startActivity(intent);
         } else if (selectedId == R.id.menu_alle) {
             clickShowAll(null);
         } else if (selectedId == R.id.menu_alle_top_feeds) {
@@ -650,34 +632,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
                 }
             });
 
-    private final ActivityResultLauncher<String[]> importSettingsLauncher =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-                if (uri != null) {
-                    try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
-                        int count = SettingsBackup.importFrom(this, inputStream);
-                        Diagnostics.action("settings_import");
-                        Util.applyRefreshSettings(this);
-                        Util.msgBox(this, getString(R.string.message_settingsimported, count));
-                        recreate();
-                    } catch (Exception e) {
-                        createErrorDialog(R.string.error_settingsimport).show();
-                    }
-                }
-            });
-
-    private final ActivityResultLauncher<String> exportSettingsLauncher =
-            registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
-                if (uri != null) {
-                    try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
-                        SettingsBackup.export(this, outputStream);
-                        Diagnostics.action("settings_export");
-                        Util.msgBox(this, String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
-                    } catch (Exception e) {
-                        createErrorDialog(R.string.error_settingsexport).show();
-                    }
-                }
-            });
-
     private String getDisplayName(Uri uri) {
         try (Cursor cursor = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
@@ -692,7 +646,7 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         //boolean reShed=PreferenceManager.getDefaultSharedPreferences(this).getBoolean(Strings.SETTINGS_REFRESHENABLED, false);
         //Util.scheduleJob(this, reShed);
 
-        Util.scheduleJob(this, false);
+        Util.scheduleJob(this, false, false);
         /**
          JobInfo.Builder jobBuilder = new JobInfo.Builder(mJobId, mServiceComponent);
          jobBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
@@ -958,11 +912,6 @@ public class RSSOverview<onRequestPermissionsResult> extends AppCompatActivity {
         });
     }
 
-    // menu / feedoverview.xml android:onClick="clickJobs"
-    public void clickJobs(MenuItem menu) {
-        Log.d(TAG, "clickJobs");
-        Util.jobInfos(this);
-    }
 
     static android.app.AlertDialog dlgColor=null;
 

@@ -1,58 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:id="@+id/menu_group_0" >
-
-        <item
-            android:id="@+id/menu_settings"
-            android:icon="@android:drawable/ic_menu_preferences"
-            android:title="@string/menu_settings"/>
-        <item
-            android:id="@+id/menu_load_last"
-            android:icon="@drawable/ic_settings_backup_restore_grey600_48dp"
-            android:title="Load Last"/>
 
         <item
             android:id="@+id/menu_allread"
             android:icon="@android:drawable/ic_menu_revert"
             android:title="@string/menu_allread"/>
+
         <item
-            android:id="@+id/menu_about"
-            android:icon="@android:drawable/ic_menu_info_details"
-            android:title="@string/menu_about"/>
+            android:id="@+id/menu_settings"
+            android:icon="@android:drawable/ic_menu_preferences"
+            android:title="@string/menu_settings"/>
+
+        <item
+            android:id="@+id/menu_enablefeedsort"
+            android:title="@string/menu_enablefeedsort"/>
+
         <item
             android:id="@+id/menu_import"
             android:title="@string/menu_import"/>
         <item
             android:id="@+id/menu_export"
             android:title="@string/menu_export"/>
-        <item
-            android:id="@+id/menu_import_settings"
-            android:title="@string/menu_import_settings"/>
-        <item
-            android:id="@+id/menu_export_settings"
-            android:title="@string/menu_export_settings"/>
-        <item
-            android:id="@+id/menu_enablefeedsort"
-            android:title="@string/menu_enablefeedsort"/>
+
         <item
             android:id="@+id/menu_deleteread"
             android:title="@string/contextmenu_deleteread"/>
         <item
             android:id="@+id/menu_deleteallentries"
             android:title="@string/contextmenu_deleteallentries"/>
-        <item
-            android:id="@+id/menu_log"
-            app:showAsAction="never"
-            android:title="@string/action_log"/>
 
         <item
-            android:id="@+id/menu_jobs"
-            app:showAsAction="never"
-            android:title="Jobs"
-            android:onClick="clickJobs"
-            />
+            android:id="@+id/menu_about"
+            android:icon="@android:drawable/ic_menu_info_details"
+            android:title="@string/menu_about"/>
 
     </group>
     <group android:id="@+id/menu_group_1" >
@@ -60,23 +42,5 @@
             android:id="@+id/menu_disablefeedsort"
             android:title="@string/menu_disablefeedsort"/>
     </group>
-<!--
-    <group android:id="@+id/menu_group_2" >
-    <item
-        android:title="SubMenu"
-        android:id="@+id/menu_color_mode">
-        <menu>
-            <item
-                android:id="@+id/menu_light_mode"
-                android:title="Light Mode"/>
-            <item
-                android:id="@+id/menu_dark_mode"
-                android:title="Dark Mode"/>
-            <item
-                android:id="@+id/menu_night_mode"
-                android:title="Night Mode"/>
-        </menu>
-    </item>
-    </group>
--->
+
 </menu>
