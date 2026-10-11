@@ -79,9 +79,16 @@ public class FeedData {
 		
 		public static final String TOPFEED = "topfeed";
 		
-		public static final String[] COLUMNS = new String[] {_ID, URL, NAME, LASTUPDATE, ICON, ERROR, PRIORITY, FETCHMODE, REALLASTUPDATE, WIFIONLY, BEIMLADEN, SYNC, TOPFEED};
+		public static final String AUTH_USER = "authuser";
 		
-		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "TEXT UNIQUE", TYPE_TEXT, TYPE_DATETIME, "BLOB", TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_BOOLEAN, TYPE_INT, TYPE_BOOLEAN, TYPE_BOOLEAN};
+		public static final String AUTH_PASSWORD = "authpassword";
+
+		/** When set, feed is omitted from timer and refresh-on-open jobs (manual refresh still works). */
+		public static final String NOAUTOREFRESH = "noautorefresh";
+		
+		public static final String[] COLUMNS = new String[] {_ID, URL, NAME, LASTUPDATE, ICON, ERROR, PRIORITY, FETCHMODE, REALLASTUPDATE, WIFIONLY, BEIMLADEN, SYNC, TOPFEED, AUTH_USER, AUTH_PASSWORD, NOAUTOREFRESH};
+		
+		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "TEXT UNIQUE", TYPE_TEXT, TYPE_DATETIME, "BLOB", TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_BOOLEAN, TYPE_INT, TYPE_BOOLEAN, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT, TYPE_BOOLEAN};
 		
 		public static final Uri CONTENT_URI(String feedId) {
 			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds/").append(feedId).toString());

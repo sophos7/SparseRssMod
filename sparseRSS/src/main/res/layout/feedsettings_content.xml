@@ -4,7 +4,7 @@
 
     <LinearLayout
         android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="10dp"
         >
@@ -35,12 +35,45 @@
             android:hint="@string/optional"
             android:singleLine="true" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feed_auth_username" />
+
+        <EditText
+            android:id="@+id/feed_auth_username"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/optional"
+            android:inputType="text"
+            android:singleLine="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/feed_auth_password" />
+
+        <EditText
+            android:id="@+id/feed_auth_password"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/optional"
+            android:inputType="textPassword"
+            android:singleLine="true" />
+
         <CheckBox
 	        android:layout_margin="5dp"
             android:id="@+id/wifionlycheckbox"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/refreshonwifionly" />
+
+        <CheckBox
+	        android:layout_margin="5dp"
+            android:id="@+id/noautorefreshcheckbox"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/noautorefresh" />
 
         
         <Spinner

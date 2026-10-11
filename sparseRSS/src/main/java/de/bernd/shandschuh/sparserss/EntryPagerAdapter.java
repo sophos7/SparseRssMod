@@ -560,6 +560,13 @@ public class EntryPagerAdapter extends PagerAdapter {
             try {
                 dto = entry;
 
+                if (dto.isFulltext) {
+                    if (mContext.shouldShowCover(dto)) {
+                        aimageFile = Util.loadCover(mContext, dto.id, dto.linkGrafik);
+                    }
+                    return null;
+                }
+
                 // Kopie in RssJobService
 
                 Request.Builder builder = new Request.Builder().url(dto.link)
@@ -570,10 +577,7 @@ public class EntryPagerAdapter extends PagerAdapter {
                 }
                 Request request = builder.build();
 
-                OkHttpClient client = Diagnostics.instrument(new OkHttpClient().newBuilder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS))
-                        .build();
+                OkHttpClient client = Diagnostics.instrumentedClientBuilder().build();
                 Response response = client.newCall(request).execute();
 
                 Readability4J readability4J = new Readability4JExtended(dto.link, Jsoup.parse(response.body().byteStream(), null, dto.link));

@@ -27,6 +27,8 @@
     <application
         android:name=".SparseRssApplication"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/full_backup_content"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:allowClearUserData="true"
         android:usesCleartextTraffic="true"
         android:icon="@drawable/icon"

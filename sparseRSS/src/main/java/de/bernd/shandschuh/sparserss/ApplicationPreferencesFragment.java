@@ -4,11 +4,14 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.text.InputType;
 
@@ -23,10 +26,20 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import de.bernd.shandschuh.sparserss.service.RssJobService;
+import de.bernd.shandschuh.sparserss.util.Diagnostics;
 import de.bernd.shandschuh.sparserss.util.PreferenceUtils;
+import de.bernd.shandschuh.sparserss.util.SettingsBackup;
 
 public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
+
+	private static final String KEY_SETTINGS_IMPORT = "settings.import";
+	private static final String KEY_SETTINGS_EXPORT = "settings.export";
+	private static final String KEY_DEBUG_VIEW_LOG = "debug.view_log";
+	private static final String KEY_DEBUG_SCHEDULED_JOBS = "debug.scheduled_jobs";
 
 	private final ActivityResultLauncher<String> notificationPermissionLauncher =
 			registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
@@ -40,6 +53,43 @@ public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
 					PreferenceManager.getDefaultSharedPreferences(requireContext()).edit()
 							.putString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, ringtone == null ? Strings.EMPTY : ringtone.toString())
 							.apply();
+				}
+			});
+
+	private final ActivityResultLauncher<String[]> importSettingsLauncher =
+			registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
+				if (uri != null) {
+					try (InputStream inputStream = requireContext().getContentResolver().openInputStream(uri)) {
+						int count = SettingsBackup.importFrom(requireContext(), inputStream);
+						Diagnostics.action("settings_import");
+						Util.applyRefreshSettings(requireContext());
+						Util.msgBox(requireContext(), getString(R.string.message_settingsimported, count));
+						requireActivity().recreate();
+					} catch (Exception e) {
+						new AlertDialog.Builder(requireContext())
+								.setMessage(R.string.error_settingsimport)
+								.setTitle(R.string.error)
+								.setPositiveButton(android.R.string.ok, null)
+								.show();
+					}
+				}
+			});
+
+	private final ActivityResultLauncher<String> exportSettingsLauncher =
+			registerForActivityResult(new ActivityResultContracts.CreateDocument("application/json"), uri -> {
+				if (uri != null) {
+					try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri)) {
+						SettingsBackup.export(requireContext(), outputStream);
+						Diagnostics.action("settings_export");
+						Util.msgBox(requireContext(),
+								String.format(getString(R.string.message_exportedto), getDisplayName(uri)));
+					} catch (Exception e) {
+						new AlertDialog.Builder(requireContext())
+								.setMessage(R.string.error_settingsexport)
+								.setTitle(R.string.error)
+								.setPositiveButton(android.R.string.ok, null)
+								.show();
+					}
 				}
 			});
 
@@ -109,6 +159,40 @@ public class ApplicationPreferencesFragment extends PreferenceFragmentCompat {
 
 		EditTextPreference proxyPort = findPreference(Strings.SETTINGS_PROXYPORT);
 		proxyPort.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
+
+		findPreference(KEY_SETTINGS_IMPORT).setOnPreferenceClickListener(preference -> {
+			importSettingsLauncher.launch(new String[]{"*/*"});
+			return true;
+		});
+		findPreference(KEY_SETTINGS_EXPORT).setOnPreferenceClickListener(preference -> {
+			exportSettingsLauncher.launch("sparse_rss_settings_" + System.currentTimeMillis() + ".json");
+			return true;
+		});
+
+		boolean debuggable = (requireContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+		Preference viewLog = findPreference(KEY_DEBUG_VIEW_LOG);
+		Preference scheduledJobs = findPreference(KEY_DEBUG_SCHEDULED_JOBS);
+		if (debuggable) {
+			viewLog.setOnPreferenceClickListener(preference -> {
+				startActivity(new Intent(requireContext(), SendLogActivity.class));
+				return true;
+			});
+			scheduledJobs.setOnPreferenceClickListener(preference -> {
+				Util.jobInfos(requireContext());
+				return true;
+			});
+		} else {
+			viewLog.getParent().removePreference(viewLog);
+			scheduledJobs.getParent().removePreference(scheduledJobs);
+		}
 	}
 
+	private String getDisplayName(Uri uri) {
+		try (Cursor cursor = requireContext().getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+			if (cursor != null && cursor.moveToFirst()) {
+				return cursor.getString(0);
+			}
+		}
+		return uri.toString();
+	}
 }

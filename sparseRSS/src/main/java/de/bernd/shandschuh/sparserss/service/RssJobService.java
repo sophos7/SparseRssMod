@@ -48,19 +48,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPInputStream;
 
-import de.bernd.shandschuh.sparserss.BASE64;
+import de.bernd.shandschuh.sparserss.util.FeedHttpFetch;
+import de.bernd.shandschuh.sparserss.util.FeedHttpFetch.FeedHttpResponse;
+import de.bernd.shandschuh.sparserss.util.FeedRefreshSelection;
 import de.bernd.shandschuh.sparserss.EntryActivity;
 import de.bernd.shandschuh.sparserss.R;
 import de.bernd.shandschuh.sparserss.RSSOverview;
@@ -131,9 +129,15 @@ public class RssJobService extends JobService {
                 doTheWork(params);
                 Log.i(TAG, "RssJobService . ONSTARTJOB DONE ! " + params.getJobId());
                 jobFinished(params, false);
-                // Scheduling a job with the same id stops it if still running, so reschedule after jobFinished
+                // One-shot jobs (legacy pre-N periodic fallback) must reschedule; periodic job id 1 is handled by the OS.
                 if (prefs.getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
-                    Util.enqueueJob(serviceContext, true);
+                    if (params.getJobId() == Util.PERIODIC_JOB_ID && Util.schedulesPeriodicRefresh()) {
+                        // next run already scheduled
+                    } else if (params.getJobId() == Util.PERIODIC_JOB_ID) {
+                        Util.enqueueJob(serviceContext, true);
+                    } else {
+                        Util.ensurePeriodicRefreshScheduled(serviceContext);
+                    }
                 }
             }
         }).start();
@@ -178,12 +182,14 @@ public class RssJobService extends JobService {
             } else {
                 proxy = null;
             }
+            FeedHttpFetch.setProxy(proxy);
 
             String feedid=params.getExtras().getString(Strings.FEEDID);
             Boolean boOverreideWifiOnly=preferences.getBoolean(Strings.SETTINGS_OVERRIDEWIFIONLY, false);
+            boolean applyAutoRefreshExclusions = params.getExtras().getBoolean(Strings.REFRESH_APPLY_AUTO_EXCLUSIONS, true);
 
             long startedAt = SystemClock.elapsedRealtime();
-            int newCount = RssJobService.refreshFeedsStatic(this, feedid, onWifi, boOverreideWifiOnly);
+            int newCount = RssJobService.refreshFeedsStatic(this, feedid, onWifi, boOverreideWifiOnly, applyAutoRefreshExclusions);
             Map<String, Object> refreshInfo = new HashMap<>();
             refreshInfo.put("new_entries", newCount);
             refreshInfo.put("duration_ms", SystemClock.elapsedRealtime() - startedAt);
@@ -354,10 +360,7 @@ public class RssJobService extends JobService {
                     }
                     Request request = builder.build();
 
-                    OkHttpClient client = Diagnostics.instrument(new OkHttpClient().newBuilder()
-                            .connectTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS))
-                            .build();
+                    OkHttpClient client = Diagnostics.instrumentedClientBuilder().build();
                     Response response = client.newCall(request).execute();
 
                     Readability4J readability4J = new Readability4JExtended(link, Jsoup.parse(response.body().byteStream(), null, link));
@@ -411,12 +414,8 @@ public class RssJobService extends JobService {
     private static final String ENCODING = "encoding=\"";
 
 
-    private static int refreshFeedsStatic(Context context, String feedId, boolean onWifi, boolean overrideWifiOnly) {
-        String selection = null;
-
-        if (!overrideWifiOnly && !onWifi) {
-            selection = new StringBuilder(FeedData.FeedColumns.WIFIONLY).append("=0 or ").append(FeedData.FeedColumns.WIFIONLY).append(" IS NULL").toString(); // "IS NOT 1" does not work on 2.1
-        }
+    private static int refreshFeedsStatic(Context context, String feedId, boolean onWifi, boolean overrideWifiOnly, boolean applyAutoRefreshExclusions) {
+        String selection = FeedRefreshSelection.build(feedId, onWifi, overrideWifiOnly, applyAutoRefreshExclusions);
 
         Cursor cursor = context.getContentResolver().query(feedId == null ? FeedData.FeedColumns.CONTENT_URI : FeedData.FeedColumns.CONTENT_URI(feedId), null, selection, null, null); // no managed query here
 
@@ -431,6 +430,10 @@ public class RssJobService extends JobService {
         int fetchmodePosition = cursor.getColumnIndex(FeedData.FeedColumns.FETCHMODE);
 
         int iconPosition = cursor.getColumnIndex(FeedData.FeedColumns.ICON);
+
+        int authUserPosition = cursor.getColumnIndex(FeedData.FeedColumns.AUTH_USER);
+
+        int authPasswordPosition = cursor.getColumnIndex(FeedData.FeedColumns.AUTH_PASSWORD);
 
         boolean imposeUserAgent = !preferences.getBoolean(Strings.SETTINGS_STANDARDUSERAGENT, false);
 
@@ -447,12 +450,18 @@ public class RssJobService extends JobService {
         while(cursor.moveToNext()) {
             String id = cursor.getString(idPosition);
 
-            HttpURLConnection connection = null;
+            FeedHttpResponse connection = null;
 
             try {
                 String feedUrl = cursor.getString(urlPosition);
 
-                connection = setupConnection(feedUrl, imposeUserAgent, followHttpHttpsRedirects);
+                String authUser = cursor.isNull(authUserPosition) ? null : cursor.getString(authUserPosition);
+
+                String authPassword = cursor.isNull(authPasswordPosition) ? null : cursor.getString(authPasswordPosition);
+
+                URL feedAuthUrl = feedUrlForAuth(feedUrl);
+
+                connection = FeedHttpFetch.executeGet(feedUrl, imposeUserAgent, followHttpHttpsRedirects, feedAuthUrl, authUser, authPassword);
 
                 String contentType = connection.getContentType();
 
@@ -467,7 +476,7 @@ public class RssJobService extends JobService {
                 handler.init(lastUpdate, id, cursor.getString(titlePosition), feedUrl);
                 if (fetchMode == 0) {
                     if (contentType != null && contentType.startsWith(CONTENT_TYPE_TEXT_HTML)) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(getConnectionInputStream(connection)));
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getBodyStream()));
 
                         String line = null;
 
@@ -503,8 +512,8 @@ public class RssJobService extends JobService {
                                         }
                                         values.put(FeedData.FeedColumns.URL, url);
                                         context.getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(id), values, null, null);
-                                        connection.disconnect();
-                                        connection = setupConnection(url, imposeUserAgent, followHttpHttpsRedirects);
+                                        connection.close();
+                                        connection = FeedHttpFetch.executeGet(url, imposeUserAgent, followHttpHttpsRedirects, feedAuthUrl, authUser, authPassword);
                                         contentType = connection.getContentType();
                                         break;
                                     }
@@ -512,8 +521,8 @@ public class RssJobService extends JobService {
                             }
                         }
                         if (posStart == -1) { // this indicates a badly configured feed
-                            connection.disconnect();
-                            connection = setupConnection(feedUrl, imposeUserAgent, followHttpHttpsRedirects);
+                            connection.close();
+                            connection = FeedHttpFetch.executeGet(feedUrl, imposeUserAgent, followHttpHttpsRedirects, feedAuthUrl, authUser, authPassword);
                             contentType = connection.getContentType();
                         }
 
@@ -536,7 +545,7 @@ public class RssJobService extends JobService {
                         }
 
                     } else {
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getConnectionInputStream(connection)));
+                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getBodyStream()));
 
                         char[] chars = new char[20];
 
@@ -544,8 +553,9 @@ public class RssJobService extends JobService {
 
                         String xmlDescription = new String(chars, 0, length);
 
-                        connection.disconnect();
-                        connection = setupConnection(connection.getURL(), imposeUserAgent, followHttpHttpsRedirects);
+                        URL reopenUrl = connection.getUrl();
+                        connection.close();
+                        connection = FeedHttpFetch.executeGet(reopenUrl, imposeUserAgent, followHttpHttpsRedirects, feedAuthUrl, authUser, authPassword);
 
                         int start = xmlDescription != null ?  xmlDescription.indexOf(ENCODING) : -1;
 
@@ -571,10 +581,10 @@ public class RssJobService extends JobService {
                 byte[] iconBytes = cursor.getBlob(iconPosition);
 
                 if (iconBytes == null) {
-                    HttpURLConnection iconURLConnection = setupConnection(new URL(new StringBuilder(connection.getURL().getProtocol()).append(Strings.PROTOCOL_SEPARATOR).append(connection.getURL().getHost()).append(Strings.FILE_FAVICON).toString()), imposeUserAgent, followHttpHttpsRedirects);
+                    FeedHttpResponse iconResponse = FeedHttpFetch.executeGet(new URL(new StringBuilder(connection.getUrl().getProtocol()).append(Strings.PROTOCOL_SEPARATOR).append(connection.getUrl().getHost()).append(Strings.FILE_FAVICON).toString()), imposeUserAgent, followHttpHttpsRedirects, null, null, null);
 
                     try {
-                        iconBytes = getBytes(getConnectionInputStream(iconURLConnection));
+                        iconBytes = getBytes(iconResponse.getBodyStream());
                         ContentValues values = new ContentValues();
 
                         values.put(FeedData.FeedColumns.ICON, iconBytes);
@@ -585,7 +595,7 @@ public class RssJobService extends JobService {
                         values.put(FeedData.FeedColumns.ICON, new byte[0]); // no icon found or error
                         context.getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(id), values, null, null);
                     } finally {
-                        iconURLConnection.disconnect();
+                        iconResponse.close();
                     }
 
                 }
@@ -597,12 +607,12 @@ public class RssJobService extends JobService {
 
                             int index2 = contentType.indexOf(';', index);
 
-                            InputStream inputStream = getConnectionInputStream(connection);
+                            InputStream inputStream = connection.getBodyStream();
 
                             handler.setInputStream(inputStream);
                             Xml.parse(inputStream, Xml.findEncodingByName(index2 > -1 ?contentType.substring(index+8, index2) : contentType.substring(index+8)), handler);
                         } else {
-                            InputStreamReader reader = new InputStreamReader(getConnectionInputStream(connection));
+                            InputStreamReader reader = new InputStreamReader(connection.getBodyStream());
 
                             handler.setReader(reader);
                             Xml.parse(reader, handler);
@@ -612,7 +622,7 @@ public class RssJobService extends JobService {
                     case FETCHMODE_REENCODE: {
                         ByteArrayOutputStream ouputStream = new ByteArrayOutputStream();
 
-                        InputStream inputStream = getConnectionInputStream(connection);
+                        InputStream inputStream = connection.getBodyStream();
 
                         byte[] byteBuffer = new byte[4096];
 
@@ -657,7 +667,7 @@ public class RssJobService extends JobService {
                         break;
                     }
                 }
-                connection.disconnect();
+                connection.close();
             } catch (FileNotFoundException e) {
                 if (!handler.isDone() && !handler.isCancelled()) {
                     ContentValues values = new ContentValues();
@@ -676,7 +686,7 @@ public class RssJobService extends JobService {
                 }
             } finally {
                 if (connection != null) {
-                    connection.disconnect();
+                    connection.close();
                 }
             }
             result += handler.getNewCount();
@@ -689,52 +699,12 @@ public class RssJobService extends JobService {
         return result;
     }
 
-    private static final HttpURLConnection setupConnection(String url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-        return setupConnection(new URL(url), imposeUseragent, followHttpHttpsRedirects);
-    }
-    private static final HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-        return setupConnection(url, imposeUseragent, followHttpHttpsRedirects, 0);
-    }
-
-    private static final String KEY_USERAGENT = "User-agent";
-    private static final String VALUE_USERAGENT = "Mozilla/5.0";
-
-    private static final HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects, int cycle) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-        HttpURLConnection connection = proxy == null ? (HttpURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection(proxy);
-
-        connection.setDoInput(true);
-        connection.setDoOutput(false);
-        if (imposeUseragent) {
-            connection.setRequestProperty(KEY_USERAGENT, VALUE_USERAGENT); // some feeds need this to work properly
+    private static URL feedUrlForAuth(String feedUrl) {
+        try {
+            return new URL(feedUrl);
+        } catch (MalformedURLException e) {
+            return null;
         }
-        connection.setConnectTimeout(30000);
-        connection.setReadTimeout(30000);
-        connection.setUseCaches(false);
-
-        if (url.getUserInfo() != null) {
-            connection.setRequestProperty("Authorization", "Basic "+BASE64.encode(url.getUserInfo().getBytes()));
-        }
-        connection.setRequestProperty("connection", "close"); // Workaround for android issue 7786
-        connection.setRequestProperty("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        connection.connect();
-
-        String location = connection.getHeaderField("Location");
-
-        if (location != null && (url.getProtocol().equals(Strings._HTTP) && location.startsWith(Strings.HTTPS) || url.getProtocol().equals(Strings._HTTPS) && location.startsWith(Strings.HTTP))) {
-            // if location != null, the system-automatic redirect has failed which indicates a protocol change
-            if (followHttpHttpsRedirects) {
-                connection.disconnect();
-
-                if (cycle < 5) {
-                    return setupConnection(new URL(location), imposeUseragent, followHttpHttpsRedirects, cycle+1);
-                } else {
-                    throw new IOException("Too many redirects.");
-                }
-            } else {
-                throw new IOException("https<->http redirect - enable in settings");
-            }
-        }
-        return connection;
     }
 
     public static byte[] getBytes(InputStream inputStream) throws IOException {
@@ -753,22 +723,6 @@ public class RssJobService extends JobService {
         output.close();
         inputStream.close();
         return result;
-    }
-
-    private static final String GZIP = "gzip";
-
-    /**
-     * This is a small wrapper for getting the properly encoded inputstream if is is gzip compressed
-     * and not properly recognized.
-     */
-    private static InputStream getConnectionInputStream(HttpURLConnection connection) throws IOException {
-        InputStream inputStream = connection.getInputStream();
-
-        if (GZIP.equals(connection.getContentEncoding()) && !(inputStream instanceof GZIPInputStream)) {
-            return new GZIPInputStream(inputStream);
-        } else {
-            return inputStream;
-        }
     }
 
     /** Creates the channel on Android 8+; the user changes its sound and vibration in system settings. */

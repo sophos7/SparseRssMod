@@ -43,16 +43,22 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import de.bernd.shandschuh.sparserss.R;
 import de.bernd.shandschuh.sparserss.provider.FeedData;
+import de.bernd.shandschuh.sparserss.util.FeedHttpAuth;
 
 public class FeedConfigActivity extends Activity {
 	private static final String WASACTIVE = "wasactive";
-	public static final String[] PROJECTION = new String[] {FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY, FeedData.FeedColumns.BEIMLADEN, FeedData.FeedColumns.SYNC, FeedData.FeedColumns.TOPFEED};
+	public static final String[] PROJECTION = new String[] {FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY, FeedData.FeedColumns.BEIMLADEN, FeedData.FeedColumns.SYNC, FeedData.FeedColumns.TOPFEED, FeedData.FeedColumns.AUTH_USER, FeedData.FeedColumns.AUTH_PASSWORD, FeedData.FeedColumns.NOAUTOREFRESH};
 	
 	private EditText nameEditText;
 	
 	private EditText urlEditText;
 	
+	private EditText authUserEditText;
+	
+	private EditText authPasswordEditText;
+	
 	private CheckBox refreshOnlyWifiCheckBox;
+	private CheckBox noAutoRefreshCheckBox;
 	private CheckBox syncCheckBox;
 //	private CheckBox cardViewCheckBox;
 	private CheckBox topfeedCheckBox;
@@ -70,7 +76,10 @@ public class FeedConfigActivity extends Activity {
 		
 		nameEditText = (EditText) findViewById(R.id.feed_title);
 		urlEditText = (EditText) findViewById(R.id.feed_url);
+		authUserEditText = (EditText) findViewById(R.id.feed_auth_username);
+		authPasswordEditText = (EditText) findViewById(R.id.feed_auth_password);
 		refreshOnlyWifiCheckBox = (CheckBox) findViewById(R.id.wifionlycheckbox);
+		noAutoRefreshCheckBox = (CheckBox) findViewById(R.id.noautorefreshcheckbox);
 		syncCheckBox = (CheckBox) findViewById(R.id.synccheckbox);
 //		cardViewCheckBox = (CheckBox) findViewById(R.id.cardviewcheckbox);
 //		cardViewCheckBox.setChecked(Util.getTestListPrefs(getApplicationContext()));
@@ -102,11 +111,13 @@ public class FeedConfigActivity extends Activity {
 			restoreInstanceState(savedInstanceState);
 			((Button) findViewById(R.id.button_ok)).setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
+					String authUser = authUserEditText.getText().toString();
+					String authPassword = authPasswordEditText.getText().toString();
 					String url = urlEditText.getText().toString();
-					
-					if (!url.startsWith(Strings.HTTP) && !url.startsWith(Strings.HTTPS)) {
-						url = Strings.HTTP+url;
+					if (!validateCredentialsForUrl(url, authUser, authPassword)) {
+						return;
 					}
+					url = FeedHttpAuth.normalizeFeedUrl(url, authUser, authPassword);
 					
 					Cursor cursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, null, new StringBuilder(FeedData.FeedColumns.URL).append(Strings.DB_ARG).toString(), new String[] {url}, null);
 					
@@ -118,11 +129,13 @@ public class FeedConfigActivity extends Activity {
 						ContentValues values = new ContentValues();
 						
 						values.put(FeedData.FeedColumns.WIFIONLY, refreshOnlyWifiCheckBox.isChecked() ? 1 : 0);
+						values.put(FeedData.FeedColumns.NOAUTOREFRESH, noAutoRefreshCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.SYNC, syncCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.BEIMLADEN, spinner.getSelectedItemPosition() );
 						values.put(FeedData.FeedColumns.TOPFEED, topfeedCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.URL, url);
 						values.put(FeedData.FeedColumns.ERROR, (String) null);
+						putAuthColumns(values, authUser, authPassword);
 						
 						String name = nameEditText.getText().toString();
 						
@@ -152,6 +165,13 @@ public class FeedConfigActivity extends Activity {
 			        spinner.setSelection(cursor.getInt(3));
 					syncCheckBox.setChecked(cursor.getInt(4) == 1);
 					topfeedCheckBox.setChecked(cursor.getInt(5) == 1);
+					if (!cursor.isNull(6)) {
+						authUserEditText.setText(cursor.getString(6));
+					}
+					if (!cursor.isNull(7)) {
+						authPasswordEditText.setText(cursor.getString(7));
+					}
+					noAutoRefreshCheckBox.setChecked(!cursor.isNull(8) && cursor.getInt(8) == 1);
 					cursor.close();
 				} else {
 					cursor.close();
@@ -162,7 +182,13 @@ public class FeedConfigActivity extends Activity {
 			}
 			((Button) findViewById(R.id.button_ok)).setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
+					String authUser = authUserEditText.getText().toString();
+					String authPassword = authPasswordEditText.getText().toString();
 					String url = urlEditText.getText().toString();
+					if (!validateCredentialsForUrl(url, authUser, authPassword)) {
+						return;
+					}
+					url = FeedHttpAuth.normalizeFeedUrl(url, authUser, authPassword);
 					
 					Cursor cursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, new String[] {FeedData.FeedColumns._ID}, new StringBuilder(FeedData.FeedColumns.URL).append(Strings.DB_ARG).toString(), new String[] {url}, null);
 					
@@ -173,9 +199,6 @@ public class FeedConfigActivity extends Activity {
 						cursor.close();
 						ContentValues values = new ContentValues();
 						
-						if (!url.startsWith(Strings.HTTP) && !url.startsWith(Strings.HTTPS)) {
-							url = Strings.HTTP+url;
-						}
 						values.put(FeedData.FeedColumns.URL, url);
 						
 						String name = nameEditText.getText().toString();
@@ -183,10 +206,12 @@ public class FeedConfigActivity extends Activity {
 						values.put(FeedData.FeedColumns.NAME, name.trim().length() > 0 ? name : null);
 						values.put(FeedData.FeedColumns.FETCHMODE, 0);
 						values.put(FeedData.FeedColumns.WIFIONLY, refreshOnlyWifiCheckBox.isChecked() ? 1 : 0);
+						values.put(FeedData.FeedColumns.NOAUTOREFRESH, noAutoRefreshCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.SYNC, syncCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.TOPFEED, topfeedCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.BEIMLADEN, spinner.getSelectedItemPosition() );
 						values.put(FeedData.FeedColumns.ERROR, (String) null);
+						putAuthColumns(values, authUser, authPassword);
 						getContentResolver().update(getIntent().getData(), values, null, null);
 
 						// getIntent().getData() content://de.bernd.shandschuh.sparserss.provider.FeedData/feeds/2
@@ -212,11 +237,31 @@ public class FeedConfigActivity extends Activity {
 		});
 	}
 	
+	private boolean validateCredentialsForUrl(String url, String authUser, String authPassword) {
+		if (!FeedHttpAuth.hasStoredCredentials(authUser, authPassword)) {
+			return true;
+		}
+		String schemeCheckUrl = FeedHttpAuth.normalizeFeedUrl(url, authUser, authPassword);
+		if (!FeedHttpAuth.isHttpsUrl(schemeCheckUrl)) {
+			Toast.makeText(this, R.string.error_credentials_require_https, Toast.LENGTH_LONG).show();
+			return false;
+		}
+		return true;
+	}
+	
+	private static void putAuthColumns(ContentValues values, String authUser, String authPassword) {
+		values.put(FeedData.FeedColumns.AUTH_USER, authUser.trim().length() > 0 ? authUser : null);
+		values.put(FeedData.FeedColumns.AUTH_PASSWORD, authPassword.length() > 0 ? authPassword : null);
+	}
+	
 	private boolean restoreInstanceState(Bundle savedInstanceState) {
 		if (savedInstanceState != null && savedInstanceState.getBoolean(WASACTIVE, false)) {
 			nameEditText.setText(savedInstanceState.getCharSequence(FeedData.FeedColumns.NAME));
 			urlEditText.setText(savedInstanceState.getCharSequence(FeedData.FeedColumns.URL));
+			authUserEditText.setText(savedInstanceState.getCharSequence(FeedData.FeedColumns.AUTH_USER));
+			authPasswordEditText.setText(savedInstanceState.getCharSequence(FeedData.FeedColumns.AUTH_PASSWORD));
 			refreshOnlyWifiCheckBox.setChecked(savedInstanceState.getBoolean(FeedData.FeedColumns.WIFIONLY));
+			noAutoRefreshCheckBox.setChecked(savedInstanceState.getBoolean(FeedData.FeedColumns.NOAUTOREFRESH));
 			spinner.setSelection(savedInstanceState.getInt(FeedData.FeedColumns.BEIMLADEN));
 			syncCheckBox.setChecked(savedInstanceState.getBoolean(FeedData.FeedColumns.SYNC));
 			topfeedCheckBox.setChecked(savedInstanceState.getBoolean(FeedData.FeedColumns.TOPFEED));
@@ -231,7 +276,10 @@ public class FeedConfigActivity extends Activity {
 		outState.putBoolean(WASACTIVE, true);
 		outState.putCharSequence(FeedData.FeedColumns.NAME, nameEditText.getText());
 		outState.putCharSequence(FeedData.FeedColumns.URL, urlEditText.getText());
+		outState.putCharSequence(FeedData.FeedColumns.AUTH_USER, authUserEditText.getText());
+		outState.putCharSequence(FeedData.FeedColumns.AUTH_PASSWORD, authPasswordEditText.getText());
 		outState.putBoolean(FeedData.FeedColumns.WIFIONLY, refreshOnlyWifiCheckBox.isChecked());
+		outState.putBoolean(FeedData.FeedColumns.NOAUTOREFRESH, noAutoRefreshCheckBox.isChecked());
 		outState.putInt(FeedData.FeedColumns.BEIMLADEN, spinner.getSelectedItemPosition());
 		outState.putBoolean(FeedData.FeedColumns.SYNC, syncCheckBox.isChecked());
 		outState.putBoolean(FeedData.FeedColumns.TOPFEED, topfeedCheckBox.isChecked());

@@ -26,6 +26,7 @@ import com.datadog.android.sessionreplay.material.MaterialExtensionSupport;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 
@@ -114,6 +115,14 @@ public final class Diagnostics {
 			builder.addInterceptor(new DatadogInterceptor.Builder(Collections.emptyMap()).build());
 		}
 		return builder;
+	}
+
+	/** Shared timeouts for instrumented OkHttp clients (article fetch, etc.). */
+	public static OkHttpClient.Builder instrumentedClientBuilder() {
+		OkHttpClient.Builder builder = new OkHttpClient.Builder()
+				.connectTimeout(10, TimeUnit.SECONDS)
+				.readTimeout(30, TimeUnit.SECONDS);
+		return instrument(builder);
 	}
 
 	public static void action(String name) {

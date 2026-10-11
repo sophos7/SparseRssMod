@@ -70,6 +70,8 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 	
 	private int iconPosition;
 	
+	private int priorityColumnPosition;
+	
 	private final Activity activity;
 	
 	private Handler handler;
@@ -104,6 +106,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 		linkPosition = getCursor().getColumnIndex(FeedData.FeedColumns.URL);
 		errorPosition = getCursor().getColumnIndex(FeedData.FeedColumns.ERROR);
 		iconPosition = getCursor().getColumnIndex(FeedData.FeedColumns.ICON);
+		priorityColumnPosition = getCursor().getColumnIndex(FeedData.FeedColumns.PRIORITY);
 		COLON = activity.getString(R.string.colon);
 
 		today = Util.startOfToday();
@@ -264,7 +267,15 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 		int visibility = feedSort ? View.VISIBLE : View.GONE;
 		
 		for (View sortView : sortViews) {
-			sortView.setVisibility(visibility);
+		 sortView.setVisibility(visibility);
 		}
+	}
+
+	public int getPriorityAt(int position) {
+		Cursor cursor = getCursor();
+		if (cursor == null || !cursor.moveToPosition(position)) {
+			return position;
+		}
+		return cursor.getInt(priorityColumnPosition);
 	}
 }

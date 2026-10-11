@@ -57,6 +57,13 @@
     <string name="menu_export">Export to OPML</string>
     <string name="menu_import_settings">Import settings</string>
     <string name="menu_export_settings">Export settings</string>
+    <string name="settings_category_backup">Backup</string>
+    <string name="settings_import_settings_summary">Restore app preferences from a JSON file (not feeds or passwords).</string>
+    <string name="settings_export_settings_summary">Save app preferences to a JSON file for backup or another device.</string>
+    <string name="settings_debug_view_log">View log</string>
+    <string name="settings_debug_view_log_summary">Open the in-app log (debug builds only).</string>
+    <string name="settings_debug_scheduled_jobs">Scheduled refresh jobs</string>
+    <string name="settings_debug_scheduled_jobs_summary">Show JobScheduler state and last automatic refresh (debug builds only).</string>
     <string name="error_settingsimport">The selected file is not a valid settings backup.</string>
     <string name="error_settingsexport">The settings export has failed.</string>
     <string name="message_settingsimported">Imported %d settings.</string>
@@ -191,8 +198,12 @@
     <string name="optional">(optional)</string>
     <string name="websiteorfeed">(website or feed)</string>
     <string name="feed_title">Title</string>
+    <string name="feed_auth_username">Username</string>
+    <string name="feed_auth_password">Password</string>
+    <string name="error_credentials_require_https">Credentials require an https:// URL.</string>
     <string name="select_file">Select file (SD-root)</string>
     <string name="refreshonwifionly">Refresh only over Wifi</string>
+    <string name="noautorefresh">Exclude from automatic refresh</string>
     <string name="changelog">Help</string>
     <string name="red">Red</string>
     <string name="green">Green</string>
